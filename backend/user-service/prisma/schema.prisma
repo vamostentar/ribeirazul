@@ -1,0 +1,304 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Profile model - Client users for the real estate platform
+model UserProfile {
+  id        String   @id @default(cuid())
+  
+  // Basic information
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+  
+  // Profile details
+  avatar    String?  // URL to avatar image
+  bio       String?  // Personal bio/description
+  dateOfBirth DateTime?
+  gender    Gender?
+  
+  // Address information
+  address   String?
+  city      String?
+  state     String?
+  country   String?
+  postalCode String?
+  
+  // Preferences
+  preferredContactMethod ContactMethod @default(EMAIL)
+  language              String        @default("pt")
+  timezone              String        @default("Europe/Lisbon")
+  
+  // Status and verification
+  isActive         Boolean   @default(true)
+  isEmailVerified  Boolean   @default(false)
+  emailVerifiedAt  DateTime?
+  isPhoneVerified  Boolean   @default(false)
+  phoneVerifiedAt  DateTime?
+  
+  // Privacy settings
+  profileVisibility ProfileVisibility @default(PUBLIC)
+  allowMarketing    Boolean           @default(false)
+  allowNotifications Boolean         @default(true)
+  
+  // User role
+  role UserRole @default(CLIENT)
+  
+  // Relationships
+  propertyInterests PropertyInterest[]
+  savedProperties   SavedProperty[]
+  searchHistory     SearchHistory[]
+  notifications     Notification[]
+  preferences       UserPreferences?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("user_profiles")
+}
+
+// User Preferences model - Detailed user preferences
+model UserPreferences {
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Property preferences
+  propertyTypes     PropertyType[]
+  minPrice          Decimal?
+  maxPrice          Decimal?
+  minBedrooms       Int?
+  maxBedrooms       Int?
+  minBathrooms      Int?
+  maxBathrooms      Int?
+  minArea           Decimal?
+  maxArea           Decimal?
+  preferredLocation String?
+  
+  // Search preferences
+  searchRadius      Int?     @default(10) // km
+  sortBy            SortBy   @default(RELEVANCE)
+  viewMode          ViewMode @default(LIST)
+  
+  // Notification preferences
+  emailNotifications     Boolean @default(true)
+  smsNotifications       Boolean @default(false)
+  pushNotifications      Boolean @default(true)
+  priceDropAlerts        Boolean @default(true)
+  newPropertyAlerts      Boolean @default(true)
+  marketUpdateAlerts     Boolean @default(false)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("user_preferences")
+}
+
+// Property Interest model - User's interest in specific properties
+model PropertyInterest {
+  id         String @id @default(cuid())
+  userId     String
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Property reference (external ID from properties service)
+  propertyId String
+  
+  // Interest details
+  interestType InterestType @default(VIEW)
+  notes        String?
+  priority     Priority     @default(MEDIUM)
+  
+  // Status
+  isActive     Boolean @default(true)
+  contacted    Boolean @default(false)
+  contactedAt  DateTime?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, propertyId])
+  @@map("property_interests")
+}
+
+// Saved Property model - User's saved/favorited properties
+model SavedProperty {
+  id         String @id @default(cuid())
+  userId     String
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Property reference (external ID from properties service)
+  propertyId String
+  
+  // Save details
+  folder     String? // Custom folder name
+  notes      String?
+  tags       String[] // User-defined tags
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, propertyId])
+  @@map("saved_properties")
+}
+
+// Search History model - User's property search history
+model SearchHistory {
+  id     String @id @default(cuid())
+  userId String
+  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Search parameters
+  query        String?
+  location     String?
+  propertyType PropertyType[]
+  minPrice     Decimal?
+  maxPrice     Decimal?
+  minBedrooms  Int?
+  maxBedrooms  Int?
+  minBathrooms Int?
+  maxBathrooms Int?
+  minArea      Decimal?
+  maxArea      Decimal?
+  
+  // Search metadata
+  resultsCount Int?
+  searchTime   Int? // milliseconds
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  @@map("search_history")
+}
+
+// Notification model - User notifications
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification details
+  type        NotificationType
+  title       String
+  message     String
+  data        Json? // Additional data
+  
+  // Status
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  isArchived  Boolean   @default(false)
+  archivedAt  DateTime?
+  
+  // Delivery
+  deliveryMethod DeliveryMethod @default(IN_APP)
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("notifications")
+}
+
+// Enums
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum ContactMethod {
+  EMAIL
+  PHONE
+  SMS
+  WHATSAPP
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  PRIVATE
+  FRIENDS_ONLY
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  TOWNHOUSE
+  CONDO
+  STUDIO
+  LOFT
+  PENTHOUSE
+  VILLA
+  COMMERCIAL
+  LAND
+  OTHER
+}
+
+enum InterestType {
+  VIEW
+  INQUIRY
+  SCHEDULE_VISIT
+  MAKE_OFFER
+  FAVORITE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SortBy {
+  RELEVANCE
+  PRICE_ASC
+  PRICE_DESC
+  DATE_ASC
+  DATE_DESC
+  AREA_ASC
+  AREA_DESC
+}
+
+enum ViewMode {
+  LIST
+  GRID
+  MAP
+}
+
+enum NotificationType {
+  PROPERTY_ALERT
+  PRICE_DROP
+  NEW_PROPERTY
+  MARKET_UPDATE
+  SYSTEM_ANNOUNCEMENT
+  REMINDER
+  WELCOME
+}
+
+enum DeliveryMethod {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
+  AGENT
+  MODERATOR
+}

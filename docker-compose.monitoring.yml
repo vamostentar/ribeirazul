@@ -1,0 +1,193 @@
+version: '3.9'
+
+services:
+  # ====================================
+  # Prometheus - Metrics Collection
+  # ====================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rz_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - monitoring
+
+  # ====================================
+  # Grafana - Visualization
+  # ====================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rz_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-worldmap-panel
+      GF_SERVER_ROOT_URL: ${GRAFANA_URL:-http://localhost:3000}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - monitoring
+
+  # ====================================
+  # Loki - Log Aggregation
+  # ====================================
+  loki:
+    image: grafana/loki:latest
+    container_name: rz_loki
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "127.0.0.1:3100:3100"
+    networks:
+      - monitoring
+
+  # ====================================
+  # Promtail - Log Shipping
+  # ====================================
+  promtail:
+    image: grafana/promtail:latest
+    container_name: rz_promtail
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  # ====================================
+  # Node Exporter - Host Metrics
+  # ====================================
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: rz_node_exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "127.0.0.1:9100:9100"
+    networks:
+      - monitoring
+
+  # ====================================
+  # cAdvisor - Container Metrics
+  # ====================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: rz_cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - monitoring
+
+  # ====================================
+  # Alertmanager - Alert Management
+  # ====================================
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: rz_alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/config.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - monitoring
+
+  # ====================================
+  # Postgres Exporter - Database Metrics
+  # ====================================
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: rz_postgres_exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/ribeirazul?sslmode=disable
+      PG_EXPORTER_DISABLE_DEFAULT_METRICS: false
+      PG_EXPORTER_DISABLE_SETTINGS_METRICS: false
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: true
+    ports:
+      - "127.0.0.1:9187:9187"
+    networks:
+      - monitoring
+      - backend
+
+  # ====================================
+  # Redis Exporter - Cache Metrics
+  # ====================================
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: rz_redis_exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "127.0.0.1:9121:9121"
+    networks:
+      - monitoring
+      - backend
+
+networks:
+  monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+  backend:
+    external: true
+    name: ribeirazul_backend
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  loki_data:
+    driver: local
+  alertmanager_data:
+    driver: local

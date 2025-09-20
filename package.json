@@ -1,0 +1,22 @@
+{
+  "name": "ribeirazul",
+  "private": true,
+  "workspaces": [
+    "backend/*"
+  ],
+  "packageManager": "yarn@4.9.2",
+  "scripts": {
+    "dev": "docker compose up --build",
+    "down": "docker compose down -v",
+    "ps": "docker compose ps",
+    "logs": "docker compose logs -f --tail=100 api",
+    "db": "docker compose exec db psql -U postgres -d ribeirazul"
+  },
+  "dependencies": {
+    "@types/qrcode": "^1.5.5",
+    "@types/speakeasy": "^2.0.10",
+    "argon2": "^0.44.0",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0"
+  }
+}

@@ -1,0 +1,307 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - Admin users for the real estate platform
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String?  @unique
+  firstName String?
+  lastName  String?
+  password  String   // Hashed with Argon2
+  phone     String?
+  avatar    String?  // URL to avatar image
+  
+  // Status and verification
+  isActive      Boolean @default(true)
+  isEmailVerified Boolean @default(false)
+  emailVerifiedAt DateTime?
+  lastLoginAt   DateTime?
+  
+  // Two-Factor Authentication
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String? // TOTP secret
+  twoFactorBackupCodes String[] // Backup codes array
+  
+  // Role and permissions
+  roleId    String
+  role      Role   @relation(fields: [roleId], references: [id])
+  
+  // Relationships
+  sessions      Session[]
+  refreshTokens RefreshToken[]
+  loginAttempts LoginAttempt[]
+  auditLogs     AuditLog[]
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  // ID of user who created this user
+  updatedBy String?  // ID of user who last updated this user
+  
+  @@map("users")
+}
+
+// Role model - RBAC system
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique // e.g., "super_admin", "admin", "manager", "operator"
+  displayName String // e.g., "Super Administrator"
+  description String?
+  
+  // Permissions as JSON array
+  permissions String[] // e.g., ["users.create", "properties.read", "analytics.view"]
+  
+  // Status
+  isActive Boolean @default(true)
+  
+  // Relationships
+  users User[]
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("roles")
+}
+
+// Session model - Active user sessions
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Session data
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  location     String?  // Geolocation info
+  
+  // Session metadata
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime
+  lastActiveAt DateTime @default(now())
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("sessions")
+}
+
+// Refresh Token model - JWT refresh tokens
+model RefreshToken {
+  id       String @id @default(cuid())
+  token    String @unique
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Token metadata
+  isRevoked   Boolean   @default(false)
+  expiresAt   DateTime
+  ipAddress   String?
+  userAgent   String?
+  
+  // Token family (for rotation)
+  family      String?   // Token family ID for rotation detection
+  replacedBy  String?   // ID of token that replaced this one
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  revokedAt DateTime?
+  
+  @@map("refresh_tokens")
+}
+
+// Login Attempt model - Security tracking
+model LoginAttempt {
+  id        String @id @default(cuid())
+  
+  // Attempt details
+  email     String
+  ipAddress String
+  userAgent String?
+  success   Boolean
+  
+  // User reference (nullable for failed attempts)
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Failure details
+  failureReason String? // e.g., "invalid_password", "account_locked", "invalid_2fa"
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  @@map("login_attempts")
+}
+
+// Token Blacklist model - Revoked JWT tokens
+model TokenBlacklist {
+  id        String   @id @default(cuid())
+  jti       String   @unique // JWT ID
+  tokenHash String   // SHA256 hash of the token
+  userId    String?  // Optional user reference
+  
+  // Blacklist metadata
+  reason    String?  // Reason for blacklisting
+  expiresAt DateTime // When the original token would expire
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  @@map("token_blacklist")
+}
+
+// Password Reset model - Password reset tokens
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  
+  // Reset metadata
+  isUsed    Boolean   @default(false)
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
+  
+  @@map("password_resets")
+}
+
+// Email Verification model - Email verification tokens
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  
+  // Verification metadata
+  isUsed    Boolean   @default(false)
+  expiresAt DateTime
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
+  
+  @@map("email_verifications")
+}
+
+// Audit Log model - Security and activity logging
+model AuditLog {
+  id       String @id @default(cuid())
+  
+  // Actor information
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Action details
+  action      String  // e.g., "user.login", "user.create", "role.update"
+  resource    String? // Resource type being acted upon
+  resourceId  String? // ID of the resource
+  
+  // Request metadata
+  ipAddress   String?
+  userAgent   String?
+  endpoint    String? // API endpoint called
+  method      String? // HTTP method
+  
+  // Change details (JSON)
+  oldValues   Json?   // Previous state
+  newValues   Json?   // New state
+  metadata    Json?   // Additional context
+  
+  // Result
+  success     Boolean @default(true)
+  errorMessage String?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  @@map("audit_logs")
+}
+
+// API Key model - Service-to-service authentication
+model ApiKey {
+  id          String @id @default(cuid())
+  name        String // Human-readable name
+  keyHash     String @unique // SHA256 hash of the API key
+  keyPreview  String // First 8 chars for identification
+  
+  // Permissions and scope
+  permissions String[] // Array of permissions
+  scopes      String[] // Array of scopes (e.g., ["read:properties", "write:users"])
+  
+  // Usage tracking
+  lastUsedAt  DateTime?
+  usageCount  Int       @default(0)
+  
+  // Status and expiry
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  
+  // Rate limiting
+  rateLimit   Int?      // Requests per minute
+  
+  // Metadata
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String?   // User ID who created the key
+  
+  @@map("api_keys")
+}
+
+// Settings model - System-wide authentication settings
+model AuthSettings {
+  id    String @id @default("singleton")
+  
+  // Password policy
+  passwordMinLength     Int     @default(8)
+  passwordRequireUpper  Boolean @default(true)
+  passwordRequireLower  Boolean @default(true)
+  passwordRequireNumber Boolean @default(true)
+  passwordRequireSymbol Boolean @default(false)
+  passwordHistoryCount  Int     @default(5) // Number of previous passwords to remember
+  
+  // Account lockout policy
+  maxLoginAttempts      Int     @default(5)
+  lockoutDuration       Int     @default(900) // 15 minutes in seconds
+  lockoutWindow         Int     @default(300) // 5 minutes in seconds
+  
+  // Session settings
+  sessionTimeout        Int     @default(86400)  // 24 hours in seconds
+  maxConcurrentSessions Int     @default(5)
+  
+  // JWT settings
+  jwtAccessExpiry       Int     @default(3600)   // 1 hour in seconds
+  jwtRefreshExpiry      Int     @default(604800) // 7 days in seconds
+  
+  // Two-factor settings
+  twoFactorRequired     Boolean @default(false)
+  twoFactorGracePeriod  Int     @default(86400)  // 24 hours in seconds
+  
+  // Email verification
+  emailVerificationRequired Boolean @default(true)
+  emailVerificationExpiry   Int     @default(86400) // 24 hours in seconds
+  
+  // Password reset
+  passwordResetExpiry   Int     @default(3600)   // 1 hour in seconds
+  
+  // Metadata
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  
+  @@map("auth_settings")
+}

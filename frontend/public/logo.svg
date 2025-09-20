@@ -1,0 +1,88 @@
+<svg width="280" height="70" viewBox="0 0 280 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sombra sutil do ícone -->
+  <g transform="translate(6, 9)" opacity="0.1">
+    <path d="M22 0C30.284 0 37 6.716 37 15V15C37 20.523 34.209 25.422 30 28L22 44L14 28C9.791 25.422 7 20.523 7 15V15C7 6.716 13.716 0 22 0Z" fill="#000"/>
+  </g>
+
+  <!-- Ícone principal -->
+  <g transform="translate(5, 8)">
+    <!-- Corpo principal do pin com gradiente mais sofisticado -->
+    <path d="M22 0C30.284 0 37 6.716 37 15V15C37 20.523 34.209 25.422 30 28L22 44L14 28C9.791 25.422 7 20.523 7 15V15C7 6.716 13.716 0 22 0Z" fill="url(#mainGradient)" stroke="url(#borderGradient)" stroke-width="0.5"/>
+    
+    <!-- Hexágono interno com mais detalhes -->
+    <path d="M22 6L28.928 9.5V16.5L22 20L15.072 16.5V9.5L22 6Z" stroke="#1F2937" stroke-width="1.2" fill="url(#innerGradient)" opacity="0.8"/>
+    
+    <!-- Casa mais detalhada -->
+    <g transform="translate(16.5, 9.5)">
+      <!-- Telhado -->
+      <path d="M5.5 2.5L9 0.5L12.5 2.5L11.5 3L9 1.5L6.5 3L5.5 2.5Z" fill="#1F2937"/>
+      <!-- Paredes -->
+      <rect x="6" y="3" width="6" height="6" fill="#2D4A3E" rx="0.3"/>
+      <!-- Porta -->
+      <rect x="8.5" y="6" width="1.5" height="3" fill="#8B4513" rx="0.2"/>
+      <circle cx="9.8" cy="7.5" r="0.1" fill="#FFD700"/>
+      <!-- Janelas com molduras -->
+      <rect x="6.5" y="4" width="1.2" height="1" fill="#87CEEB" stroke="#1F2937" stroke-width="0.1"/>
+      <rect x="10.3" y="4" width="1.2" height="1" fill="#87CEEB" stroke="#1F2937" stroke-width="0.1"/>
+      <!-- Divisórias das janelas -->
+      <line x1="7.1" y1="4" x2="7.1" y2="5" stroke="#1F2937" stroke-width="0.05"/>
+      <line x1="6.5" y1="4.5" x2="7.7" y2="4.5" stroke="#1F2937" stroke-width="0.05"/>
+      <line x1="10.9" y1="4" x2="10.9" y2="5" stroke="#1F2937" stroke-width="0.05"/>
+      <line x1="10.3" y1="4.5" x2="11.5" y2="4.5" stroke="#1F2937" stroke-width="0.05"/>
+    </g>
+
+    <!-- Brilho sutil no topo -->
+    <ellipse cx="22" cy="8" rx="6" ry="2" fill="url(#highlight)" opacity="0.3"/>
+  </g>
+
+  <!-- Texto RIBEIRAZUL com kerning ajustado -->
+  <g transform="translate(55, 0)">
+    <text x="0" y="28" fill="url(#textGradient)" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="22" font-weight="900" letter-spacing="-0.5">RIBEIRAZUL</text>
+    
+    <!-- Sublinha decorativa -->
+    <rect x="0" y="32" width="40" height="1.5" fill="url(#accentGradient)" rx="0.75"/>
+    
+    <!-- Subtítulo mais elegante -->
+    <text x="0" y="48" fill="#4B5563" font-family="Inter, sans-serif" font-size="11" font-weight="500" letter-spacing="0.3">Mediação Imobiliária e Remodelações</text>
+  </g>
+
+  <!-- Gradientes sofisticados -->
+  <defs>
+    <!-- Gradiente principal do ícone -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FB923C;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EA580C;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente da borda -->
+    <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDBA74;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#C2410C;stop-opacity:0.8" />
+    </linearGradient>
+    
+    <!-- Gradiente interno -->
+    <radialGradient id="innerGradient" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0" />
+    </radialGradient>
+    
+    <!-- Brilho superior -->
+    <radialGradient id="highlight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0" />
+    </radialGradient>
+    
+    <!-- Gradiente do texto -->
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1F2937;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#374151;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente do acento -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EA580C;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Configurações globais do sistema (singleton)
+model Settings {
+  id String @id @default("singleton")
+
+  // Branding
+  brandName  String  @default("Ribeira Azul")
+  logoUrl    String?
+  faviconUrl String?
+
+  // Cores
+  primaryColor    String @default("#2563eb")
+  secondaryColor  String @default("#1f2937")
+  accentColor     String @default("#f59e0b")
+  backgroundColor String @default("#ffffff")
+  textColor       String @default("#1f2937")
+
+  // Contactos
+  contactEmail   String @default("contato@ribeirazul.com")
+  contactPhone   String @default("+55 11 99999-9999")
+  contactAddress String @default("São Paulo, SP")
+
+  // Redes sociais
+  socialLinks Json? // { facebook: string, instagram: string, linkedin: string, etc. }
+
+  // Horários de funcionamento
+  businessHours Json? // { monday: string, tuesday: string, etc. }
+
+  // Configurações de negócio
+  businessConfig Json? // { currency: string, timezone: string, language: string, etc. }
+
+  // SEO
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+
+  // Configurações técnicas
+  maintenanceMode    Boolean @default(false)
+  maintenanceMessage String?
+
+  // Metadados
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String? // ID do usuário que fez a última atualização
+
+  // Relacionamentos
+  history SettingsHistory[]
+
+  @@map("settings")
+}
+
+// Histórico de alterações nas configurações
+model SettingsHistory {
+  id         String @id @default(cuid())
+  settingsId String @default("singleton")
+
+  // Dados da alteração
+  fieldName String // Nome do campo alterado
+  oldValue  String? // Valor anterior
+  newValue  String? // Novo valor
+
+  // Metadados
+  changedBy    String? // ID do usuário que fez a alteração
+  changeReason String? // Motivo da alteração
+  createdAt    DateTime @default(now())
+
+  // Relacionamento
+  settings Settings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+
+  @@map("settings_history")
+}
+
+// Configurações específicas por módulo/serviço
+model ModuleSettings {
+  id            String @id @default(cuid())
+  moduleName    String // Nome do módulo (ex: "auth", "properties", "media")
+  settingsKey   String // Chave da configuração
+  settingsValue Json // Valor da configuração (flexível)
+
+  // Metadados
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  // Índice único por módulo e chave
+  @@unique([moduleName, settingsKey])
+  @@map("module_settings")
+}

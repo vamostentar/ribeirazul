@@ -1,0 +1,222 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PropertyStatus {
+  for_sale
+  for_rent
+  sold
+  rented
+  under_contract
+  withdrawn
+}
+
+enum AdminStatus {
+  ACTIVE
+  PENDING
+  INACTIVE
+}
+
+enum PropertyType {
+  apartamento
+  moradia
+  loft
+  penthouse
+  estudio
+  escritorio
+  terreno
+  loja
+  armazem
+  quinta
+  predio
+}
+
+enum PropertyFeature {
+  POOL
+  GARAGE
+  GARDEN
+  ELEVATOR
+  BALCONY
+  TERRACE
+  FIREPLACE
+  AIR_CONDITIONING
+  CENTRAL_HEATING
+  SOLAR_PANELS
+  FURNISHED
+  PARKING
+  SECURITY_SYSTEM
+  GYM
+  SPA
+  CONCIERGE
+  PET_FRIENDLY
+  OCEAN_VIEW
+  MOUNTAIN_VIEW
+  CITY_VIEW
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+  USER
+}
+
+model Property {
+  id          String   @id @default(uuid())
+  title       String   @db.VarChar(200)
+  location    String   @db.VarChar(500)
+  price       Decimal  @db.Decimal(12, 2)
+  status      PropertyStatus @default(for_sale)
+  adminStatus AdminStatus @default(ACTIVE)
+  type        PropertyType?
+  imageUrl    String?  @db.VarChar(2048)
+  description String?  @db.Text
+  
+  // Property characteristics
+  bedrooms    Int?     @db.SmallInt
+  bathrooms   Int?     @db.SmallInt  
+  area        Decimal? @db.Decimal(8, 2) // in square meters
+  yearBuilt   Int?     @db.SmallInt
+  
+  // Location data
+  coordinates Json? // { latitude: number, longitude: number }
+  
+  // Features and amenities
+  features    String[] @default([])
+  
+  // Contact information
+  contactPhone String? @db.VarChar(20)
+  contactEmail String? @db.VarChar(100)
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationships
+  ownerId      String?
+  owner        User?    @relation(fields: [ownerId], references: [id])
+  agentId      String?
+  agent        Agent?   @relation(fields: [agentId], references: [id])
+  images       PropertyImage[]
+  visits       PropertyVisit[]
+  favorites    PropertyFavorite[]
+  priceHistory PriceHistory[]
+  
+  @@index([status])
+  @@index([adminStatus])
+  @@index([type])
+  @@index([price])
+  @@index([area])
+  @@index([bedrooms])
+  @@index([bathrooms])
+  @@index([yearBuilt])
+  @@index([location])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([status, type])
+  @@index([status, price])
+  @@index([type, price])
+  @@index([adminStatus, status])
+  
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  url        String   @db.VarChar(2048)
+  alt        String?  @db.VarChar(200)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  
+  @@index([propertyId, order])
+  @@map("property_images")
+}
+
+model PriceHistory {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  oldPrice   Decimal? @db.Decimal(12, 2)
+  newPrice   Decimal  @db.Decimal(12, 2)
+  reason     String?  @db.VarChar(100)
+  changedAt  DateTime @default(now())
+  changedBy  String?  // User ID who made the change
+  
+  @@index([propertyId, changedAt])
+  @@map("price_history")
+}
+
+model PropertyVisit {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  visitorId  String?  // User ID if logged in
+  ipAddress  String   @db.Inet
+  userAgent  String?  @db.Text
+  visitedAt  DateTime @default(now())
+  
+  @@index([propertyId, visitedAt])
+  @@index([visitorId, visitedAt])
+  @@map("property_visits")
+}
+
+model PropertyFavorite {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  
+  @@unique([propertyId, userId])
+  @@index([userId, createdAt])
+  @@map("property_favorites")
+}
+
+model User {
+  id         String     @id @default(uuid())
+  email      String     @unique @db.VarChar(100)
+  name       String     @db.VarChar(100)
+  phone      String?    @db.VarChar(20)
+  role       UserRole   @default(USER)
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  
+  // Relationships
+  properties Property[]
+  favorites  PropertyFavorite[]
+  agent      Agent?
+  
+  @@index([email])
+  @@index([role, isActive])
+  @@map("users")
+}
+
+model Agent {
+  id          String     @id @default(uuid())
+  userId      String     @unique
+  user        User       @relation(fields: [userId], references: [id])
+  license     String     @unique @db.VarChar(50)
+  company     String?    @db.VarChar(200)
+  specialties String[]   @default([])
+  isVerified  Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relationships
+  properties  Property[]
+  
+  @@index([license])
+  @@index([isVerified])
+  @@map("agents")
+}
