@@ -1,0 +1,289 @@
+# Coolify-optimized Docker Compose
+# Ribeira Azul - Real Estate Platform
+
+x-common-environment: &common-env
+  NODE_ENV: production
+  LOG_LEVEL: warn
+
+services:
+  # ====================================
+  # PostgreSQL Database
+  # ====================================
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ribeirazul}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ====================================
+  # Redis Cache
+  # ====================================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [
+      "redis-server",
+      "--requirepass", "${REDIS_PASSWORD}",
+      "--maxmemory", "256mb",
+      "--maxmemory-policy", "allkeys-lru"
+    ]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ====================================
+  # MinIO Object Storage
+  # ====================================
+  minio:
+    image: quay.io/minio/minio:latest
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER: "on"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ====================================
+  # Auth Service
+  # ====================================
+  auth:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8084
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=auth
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ====================================
+  # Properties Service
+  # ====================================
+  properties:
+    build:
+      context: ./backend/properties-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8082
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=properties
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      BASE_URL: ${API_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    volumes:
+      - properties_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ====================================
+  # Users Service
+  # ====================================
+  users:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8086
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=users
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/4
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ====================================
+  # Settings Service
+  # ====================================
+  settings:
+    build:
+      context: ./backend/settings-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8085
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=settings
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/3
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ====================================
+  # Media Service
+  # ====================================
+  media:
+    build:
+      context: ./backend/media-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8083
+      HOST: "0.0.0.0"
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/2
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ====================================
+  # API Gateway
+  # ====================================
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      auth:
+        condition: service_healthy
+      properties:
+        condition: service_healthy
+      media:
+        condition: service_healthy
+      settings:
+        condition: service_healthy
+      users:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8081
+      HOST: "0.0.0.0"
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      # Service URLs
+      AUTH_SERVICE_URL: http://auth:8084
+      PROPERTIES_SERVICE_URL: http://properties:8082
+      MEDIA_SERVICE_URL: http://media:8083
+      SETTINGS_SERVICE_URL: http://settings:8085
+      USERS_SERVICE_URL: http://users:8086
+      # Timeouts
+      AUTH_SERVICE_TIMEOUT: 15000
+      PROPERTIES_SERVICE_TIMEOUT: 15000
+      MEDIA_SERVICE_TIMEOUT: 30000
+      SETTINGS_SERVICE_TIMEOUT: 10000
+      USERS_SERVICE_TIMEOUT: 10000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ====================================
+  # Frontend (Nginx)
+  # ====================================
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.production
+      args:
+        VITE_API_URL: ${API_URL}
+        NODE_ENV: production
+    restart: unless-stopped
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Coolify will handle port mapping and SSL termination
+    expose:
+      - "80"
+
+volumes:
+  db_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  properties_uploads:
+    driver: local
