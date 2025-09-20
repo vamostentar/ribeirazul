@@ -73,8 +73,7 @@ RUN addgroup -S nginx-group && \
     touch /var/run/nginx.pid && \
     chown -R nginx-user:nginx-group /var/run/nginx.pid
 
-# Security headers and optimizations
-RUN echo "server_tokens off;" >> /etc/nginx/nginx.conf
+# Security headers and optimizations (handled in nginx-production.conf)
 
 # Expose port
 EXPOSE 80 443
