@@ -1,4 +1,3 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 
@@ -15,13 +14,21 @@ export interface JWTPayload {
   jti?: string;
 }
 
-export interface AuthenticatedRequest extends FastifyRequest {
+export interface AuthenticatedRequest {
   user?: {
     id: string;
     email: string;
     role: string;
     permissions: string[];
   };
+  method: string;
+  url: string;
+  headers: any;
+}
+
+export interface FastifyReply {
+  status: (code: number) => FastifyReply;
+  send: (payload?: any) => FastifyReply;
 }
 
 /**
@@ -134,11 +141,9 @@ function isPublicRoute(url: string, method: string): boolean {
     return true;
   }
   
-  // Public properties endpoints
-  if (url === '/api/v1/properties' && method === 'GET') {
-    return true;
-  }
-  if (url === '/api/v1/properties/search' && method === 'GET') {
+  // Public properties endpoints (including query parameters)
+  if (url.startsWith('/api/v1/properties') && method === 'GET') {
+    // Allow /api/v1/properties, /api/v1/properties?limit=12, /api/v1/properties/search, etc.
     return true;
   }
   

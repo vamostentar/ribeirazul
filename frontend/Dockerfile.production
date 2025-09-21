@@ -33,7 +33,7 @@ COPY package.json yarn.lock* .yarnrc.yml ./
 COPY . .
 
 # Build arguments for environment variables
-ARG VITE_API_URL=https://app.neodras.com
+ARG VITE_API_URL=https://neodras.com
 ARG NODE_ENV=production
 
 # Set environment variables for build
