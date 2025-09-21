@@ -95,7 +95,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=auth
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-Ribeirazul_JWT_Super_Secure_Secret_Key_2024_Production_Environment}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://www.neodras.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Auth Service (serviço interno)
       - "traefik.enable=false"
@@ -126,7 +126,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=properties
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/1
       BASE_URL: ${API_URL:-https://www.neodras.com}
-      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     volumes:
       - properties_uploads:/app/uploads
     labels:
@@ -158,7 +158,7 @@ services:
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=users
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/4
-      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
       - "traefik.enable=false"
@@ -188,7 +188,7 @@ services:
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=settings
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/3
-      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Settings Service (serviço interno)
       - "traefik.enable=false"
@@ -221,7 +221,7 @@ services:
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-ribeirazul_minio}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-Ribeirazul_MinIO_Secret_2024!Secure}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME:-ribeirazul-media}
-      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Media Service (serviço interno)
       - "traefik.enable=false"
@@ -256,7 +256,7 @@ services:
       PORT: 8081
       HOST: "0.0.0.0"
       JWT_SECRET: ${JWT_SECRET:-Ribeirazul_JWT_Super_Secure_Secret_Key_2024_Production_Environment}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://www.neodras.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
       # Service URLs
       AUTH_SERVICE_URL: http://auth:8084
       PROPERTIES_SERVICE_URL: http://properties:8082
@@ -269,22 +269,9 @@ services:
       MEDIA_SERVICE_TIMEOUT: 30000
       SETTINGS_SERVICE_TIMEOUT: 10000
       USERS_SERVICE_TIMEOUT: 10000
-    labels:
-      # Traefik labels explícitos para API Gateway - FIX para Host vazio
-      - "traefik.enable=true"
-      # Router HTTPS para API (TEMPORARIAMENTE DESABILITADO - Rate Limit Let's Encrypt)
-      # - "traefik.http.routers.neodras-api-secure.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
-      # - "traefik.http.routers.neodras-api-secure.entrypoints=https"
-      # - "traefik.http.routers.neodras-api-secure.tls=true"
-      # - "traefik.http.routers.neodras-api-secure.tls.certresolver=letsencrypt"
-      # - "traefik.http.routers.neodras-api-secure.priority=10"
-      # Router HTTP para API (redirect)
-      - "traefik.http.routers.neodras-api-insecure.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.neodras-api-insecure.entrypoints=http"
-      # - "traefik.http.routers.neodras-api-insecure.middlewares=neodras-redirect"
-      - "traefik.http.routers.neodras-api-insecure.priority=10"
-      # Service
-      - "traefik.http.services.neodras-api.loadbalancer.server.port=8081"
+    # REMOVER LABELS - Deixar Coolify gerir automaticamente
+    # labels:
+    #   - "traefik.enable=true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
@@ -308,25 +295,9 @@ services:
         condition: service_healthy
     environment:
       <<: *common-env
-    labels:
-      # Traefik labels explícitos para Frontend - FIX para Host vazio
-      - "traefik.enable=true"
-      # Router HTTPS (TEMPORARIAMENTE DESABILITADO - Rate Limit Let's Encrypt)
-      # - "traefik.http.routers.neodras-web-secure.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
-      # - "traefik.http.routers.neodras-web-secure.entrypoints=https"
-      # - "traefik.http.routers.neodras-web-secure.tls=true"
-      # - "traefik.http.routers.neodras-web-secure.tls.certresolver=letsencrypt"
-      # - "traefik.http.routers.neodras-web-secure.priority=1"
-      # Router HTTP (para ACME challenge e redirect)
-      - "traefik.http.routers.neodras-web-insecure.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
-      - "traefik.http.routers.neodras-web-insecure.entrypoints=http"
-      # Middleware redirect temporariamente desabilitado
-      # - "traefik.http.middlewares.neodras-redirect.redirectscheme.scheme=https"
-      # - "traefik.http.middlewares.neodras-redirect.redirectscheme.permanent=true"
-      # - "traefik.http.routers.neodras-web-insecure.middlewares=neodras-redirect"
-      - "traefik.http.routers.neodras-web-insecure.priority=1"
-      # Service
-      - "traefik.http.services.neodras-web.loadbalancer.server.port=80"
+    # REMOVER LABELS - Deixar Coolify gerir automaticamente
+    # labels:
+    #   - "traefik.enable=true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
