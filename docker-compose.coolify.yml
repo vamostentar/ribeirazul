@@ -245,6 +245,15 @@ services:
       MEDIA_SERVICE_TIMEOUT: 30000
       SETTINGS_SERVICE_TIMEOUT: 10000
       USERS_SERVICE_TIMEOUT: 10000
+    labels:
+      # Traefik labels explícitos para API Gateway
+      - "traefik.enable=true"
+      - "traefik.http.routers.neodras-api.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.neodras-api.entrypoints=web,websecure"
+      - "traefik.http.routers.neodras-api.tls=true"
+      - "traefik.http.routers.neodras-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.neodras-api.loadbalancer.server.port=8081"
+      - "traefik.http.routers.neodras-api.middlewares=api-cors@file,security-headers@file"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
@@ -268,6 +277,19 @@ services:
         condition: service_healthy
     environment:
       <<: *common-env
+    labels:
+      # Traefik labels explícitos para Frontend
+      - "traefik.enable=true"
+      - "traefik.http.routers.neodras-web.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
+      - "traefik.http.routers.neodras-web.entrypoints=web,websecure"
+      - "traefik.http.routers.neodras-web.tls=true"
+      - "traefik.http.routers.neodras-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.neodras-web.loadbalancer.server.port=80"
+      - "traefik.http.routers.neodras-web.middlewares=redirect-to-https@file,security-headers@file"
+      # Redirect www para domínio principal
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www.neodras.com/(.*)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://neodras.com/$${1}"
+      - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s

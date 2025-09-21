@@ -20,6 +20,9 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    labels:
+      # Desabilitar Traefik para PostgreSQL (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ribeirazul_prod} -d ${POSTGRES_DB:-ribeirazul}"]
       interval: 30s
@@ -41,6 +44,9 @@ services:
     ]
     volumes:
       - redis_data:/data
+    labels:
+      # Desabilitar Traefik para Redis (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}", "ping"]
       interval: 30s
@@ -60,6 +66,9 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+    labels:
+      # Desabilitar Traefik para MinIO (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -87,6 +96,9 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-Ribeirazul_JWT_Super_Secure_Secret_Key_2024_Production_Environment}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://www.neodras.com}
+    labels:
+      # Desabilitar Traefik para Auth Service (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
       interval: 30s
@@ -117,6 +129,9 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
     volumes:
       - properties_uploads:/app/uploads
+    labels:
+      # Desabilitar Traefik para Properties Service (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
       interval: 30s
@@ -144,6 +159,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=users
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/4
       CORS_ORIGIN: ${CORS_ORIGIN}
+    labels:
+      # Desabilitar Traefik para Users Service (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       interval: 30s
@@ -171,6 +189,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=settings
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/3
       CORS_ORIGIN: ${CORS_ORIGIN}
+    labels:
+      # Desabilitar Traefik para Settings Service (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/api/v1/health"]
       interval: 30s
@@ -201,6 +222,9 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-Ribeirazul_MinIO_Secret_2024!Secure}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME:-ribeirazul-media}
       CORS_ORIGIN: ${CORS_ORIGIN}
+    labels:
+      # Desabilitar Traefik para Media Service (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
       interval: 30s
@@ -245,6 +269,15 @@ services:
       MEDIA_SERVICE_TIMEOUT: 30000
       SETTINGS_SERVICE_TIMEOUT: 10000
       USERS_SERVICE_TIMEOUT: 10000
+    labels:
+      # Traefik labels explícitos para API Gateway - FIX para Host vazio
+      - "traefik.enable=true"
+      - "traefik.http.routers.neodras-api.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.neodras-api.entrypoints=web,websecure"
+      - "traefik.http.routers.neodras-api.tls=true"
+      - "traefik.http.routers.neodras-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.neodras-api.loadbalancer.server.port=8081"
+      - "traefik.http.routers.neodras-api.middlewares=api-cors@file,security-headers@file"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
@@ -268,6 +301,18 @@ services:
         condition: service_healthy
     environment:
       <<: *common-env
+    labels:
+      # Traefik labels explícitos para Frontend - FIX para Host vazio
+      - "traefik.enable=true"
+      - "traefik.http.routers.neodras-web.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
+      - "traefik.http.routers.neodras-web.entrypoints=web,websecure"
+      - "traefik.http.routers.neodras-web.tls=true"
+      - "traefik.http.routers.neodras-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.neodras-web.loadbalancer.server.port=80"
+      - "traefik.http.routers.neodras-web.middlewares=redirect-to-https@file,security-headers@file"
+      # Prioridade para evitar conflitos
+      - "traefik.http.routers.neodras-web.priority=1"
+      - "traefik.http.routers.neodras-api.priority=10"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
