@@ -272,12 +272,19 @@ services:
     labels:
       # Traefik labels explícitos para API Gateway - FIX para Host vazio
       - "traefik.enable=true"
-      - "traefik.http.routers.neodras-api.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.neodras-api.entrypoints=web,websecure"
-      - "traefik.http.routers.neodras-api.tls=true"
-      - "traefik.http.routers.neodras-api.tls.certresolver=letsencrypt"
+      # Router HTTPS para API
+      - "traefik.http.routers.neodras-api-secure.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.neodras-api-secure.entrypoints=https"
+      - "traefik.http.routers.neodras-api-secure.tls=true"
+      - "traefik.http.routers.neodras-api-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.neodras-api-secure.priority=10"
+      # Router HTTP para API (redirect)
+      - "traefik.http.routers.neodras-api-insecure.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.neodras-api-insecure.entrypoints=http"
+      - "traefik.http.routers.neodras-api-insecure.middlewares=redirect-to-https@internal"
+      - "traefik.http.routers.neodras-api-insecure.priority=10"
+      # Service
       - "traefik.http.services.neodras-api.loadbalancer.server.port=8081"
-      - "traefik.http.routers.neodras-api.middlewares=api-cors@file,security-headers@file"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
@@ -304,15 +311,19 @@ services:
     labels:
       # Traefik labels explícitos para Frontend - FIX para Host vazio
       - "traefik.enable=true"
-      - "traefik.http.routers.neodras-web.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
-      - "traefik.http.routers.neodras-web.entrypoints=web,websecure"
-      - "traefik.http.routers.neodras-web.tls=true"
-      - "traefik.http.routers.neodras-web.tls.certresolver=letsencrypt"
+      # Router HTTPS
+      - "traefik.http.routers.neodras-web-secure.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
+      - "traefik.http.routers.neodras-web-secure.entrypoints=https"
+      - "traefik.http.routers.neodras-web-secure.tls=true"
+      - "traefik.http.routers.neodras-web-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.neodras-web-secure.priority=1"
+      # Router HTTP (para ACME challenge e redirect)
+      - "traefik.http.routers.neodras-web-insecure.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
+      - "traefik.http.routers.neodras-web-insecure.entrypoints=http"
+      - "traefik.http.routers.neodras-web-insecure.middlewares=redirect-to-https@internal"
+      - "traefik.http.routers.neodras-web-insecure.priority=1"
+      # Service
       - "traefik.http.services.neodras-web.loadbalancer.server.port=80"
-      - "traefik.http.routers.neodras-web.middlewares=redirect-to-https@file,security-headers@file"
-      # Prioridade para evitar conflitos
-      - "traefik.http.routers.neodras-web.priority=1"
-      - "traefik.http.routers.neodras-api.priority=10"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s

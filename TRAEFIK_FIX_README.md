@@ -1,22 +1,24 @@
-# 🔧 FIX: Problema de Host Vazio no Traefik/Coolify
+# 🔧 FIX: Problemas Traefik/Coolify - VERSÃO 2
 
-## 🚨 **PROBLEMA IDENTIFICADO**
+## 🚨 **PROBLEMAS IDENTIFICADOS**
 
-O Coolify estava a gerar configurações Traefik com valores de Host vazios, causando erros como:
-```
-error="error while adding rule Host(``): error while checking rule Host: empty args for matcher Host, []"
-```
+1. **Host Vazio**: `error="error while adding rule Host(\`\`): empty args for matcher Host"`
+2. **EntryPoints Inexistentes**: `EntryPoint doesn't exist entryPointName=web`
+3. **Routers Duplicados**: `Router defined multiple times with different configurations`
+4. **ACME Challenge 404**: `Invalid response from http://neodras.com/.well-known/acme-challenge/`
 
-## ✅ **SOLUÇÃO APLICADA**
+## ✅ **SOLUÇÕES APLICADAS**
 
-### 1. **Configuração Manual do Traefik**
-Criado ficheiro `traefik/dynamic/neodras.yml` com:
-- Routers explícitos para web e API
-- Middlewares de segurança
-- Configuração SSL/TLS automática
-- Headers CORS apropriados
+### 1. **Correção de EntryPoints**
+- Alterado de `web,websecure` para `http,https` (padrão Coolify)
+- Separação de routers HTTP e HTTPS para ACME challenge
 
-### 2. **Labels Traefik Explícitos no Docker Compose**
+### 2. **Resolução de Conflitos de Routers**
+- Removida configuração manual conflituosa
+- Routers únicos: `neodras-web-secure/insecure` e `neodras-api-secure/insecure`
+- Middlewares simplificados para `@internal`
+
+### 3. **Labels Traefik Explícitos e Otimizados**
 
 **Serviços EXPOSTOS (com labels específicos):**
 - `web` (Frontend): `Host(neodras.com) || Host(www.neodras.com)`
