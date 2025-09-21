@@ -272,16 +272,16 @@ services:
     labels:
       # Traefik labels explícitos para API Gateway - FIX para Host vazio
       - "traefik.enable=true"
-      # Router HTTPS para API
-      - "traefik.http.routers.neodras-api-secure.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.neodras-api-secure.entrypoints=https"
-      - "traefik.http.routers.neodras-api-secure.tls=true"
-      - "traefik.http.routers.neodras-api-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.neodras-api-secure.priority=10"
+      # Router HTTPS para API (TEMPORARIAMENTE DESABILITADO - Rate Limit Let's Encrypt)
+      # - "traefik.http.routers.neodras-api-secure.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
+      # - "traefik.http.routers.neodras-api-secure.entrypoints=https"
+      # - "traefik.http.routers.neodras-api-secure.tls=true"
+      # - "traefik.http.routers.neodras-api-secure.tls.certresolver=letsencrypt"
+      # - "traefik.http.routers.neodras-api-secure.priority=10"
       # Router HTTP para API (redirect)
       - "traefik.http.routers.neodras-api-insecure.rule=Host(`neodras.com`) && PathPrefix(`/api`)"
       - "traefik.http.routers.neodras-api-insecure.entrypoints=http"
-      - "traefik.http.routers.neodras-api-insecure.middlewares=redirect-to-https@internal"
+      # - "traefik.http.routers.neodras-api-insecure.middlewares=neodras-redirect"
       - "traefik.http.routers.neodras-api-insecure.priority=10"
       # Service
       - "traefik.http.services.neodras-api.loadbalancer.server.port=8081"
@@ -311,16 +311,19 @@ services:
     labels:
       # Traefik labels explícitos para Frontend - FIX para Host vazio
       - "traefik.enable=true"
-      # Router HTTPS
-      - "traefik.http.routers.neodras-web-secure.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
-      - "traefik.http.routers.neodras-web-secure.entrypoints=https"
-      - "traefik.http.routers.neodras-web-secure.tls=true"
-      - "traefik.http.routers.neodras-web-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.neodras-web-secure.priority=1"
+      # Router HTTPS (TEMPORARIAMENTE DESABILITADO - Rate Limit Let's Encrypt)
+      # - "traefik.http.routers.neodras-web-secure.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
+      # - "traefik.http.routers.neodras-web-secure.entrypoints=https"
+      # - "traefik.http.routers.neodras-web-secure.tls=true"
+      # - "traefik.http.routers.neodras-web-secure.tls.certresolver=letsencrypt"
+      # - "traefik.http.routers.neodras-web-secure.priority=1"
       # Router HTTP (para ACME challenge e redirect)
       - "traefik.http.routers.neodras-web-insecure.rule=Host(`neodras.com`) || Host(`www.neodras.com`)"
       - "traefik.http.routers.neodras-web-insecure.entrypoints=http"
-      - "traefik.http.routers.neodras-web-insecure.middlewares=redirect-to-https@internal"
+      # Middleware redirect temporariamente desabilitado
+      # - "traefik.http.middlewares.neodras-redirect.redirectscheme.scheme=https"
+      # - "traefik.http.middlewares.neodras-redirect.redirectscheme.permanent=true"
+      # - "traefik.http.routers.neodras-web-insecure.middlewares=neodras-redirect"
       - "traefik.http.routers.neodras-web-insecure.priority=1"
       # Service
       - "traefik.http.services.neodras-web.loadbalancer.server.port=80"
