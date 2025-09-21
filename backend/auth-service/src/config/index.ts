@@ -164,7 +164,9 @@ class ConfigService {
   }
 
   get corsOrigins(): string[] {
-    return this._config.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    // Support both CORS_ORIGINS and CORS_ORIGIN for compatibility
+    const corsVar = process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || this._config.CORS_ORIGIN;
+    return corsVar.split(',').map(origin => origin.trim());
   }
 
   get databaseConfig() {

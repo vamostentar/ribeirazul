@@ -95,7 +95,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=auth
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-Ribeirazul_JWT_Super_Secure_Secret_Key_2024_Production_Environment}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
+      CORS_ORIGINS: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Auth Service (serviço interno)
       - "traefik.enable=false"
@@ -126,7 +126,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=properties
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/1
       BASE_URL: ${API_URL:-https://www.neodras.com}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
+      CORS_ORIGINS: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     volumes:
       - properties_uploads:/app/uploads
     labels:
@@ -158,7 +158,7 @@ services:
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=users
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/4
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
+      CORS_ORIGINS: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
       - "traefik.enable=false"
@@ -188,7 +188,7 @@ services:
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-ribeirazul_prod}:${POSTGRES_PASSWORD:-Ribeirazul_Prod_2024!SecureDB}@db:5432/${POSTGRES_DB:-ribeirazul}?schema=settings
       REDIS_URL: redis://:${REDIS_PASSWORD:-Ribeirazul_Redis_2024!Secure}@redis:6379/3
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
+      CORS_ORIGINS: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Settings Service (serviço interno)
       - "traefik.enable=false"
@@ -221,7 +221,7 @@ services:
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-ribeirazul_minio}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-Ribeirazul_MinIO_Secret_2024!Secure}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME:-ribeirazul-media}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
+      CORS_ORIGINS: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
     labels:
       # Desabilitar Traefik para Media Service (serviço interno)
       - "traefik.enable=false"
@@ -256,7 +256,7 @@ services:
       PORT: 8081
       HOST: "0.0.0.0"
       JWT_SECRET: ${JWT_SECRET:-Ribeirazul_JWT_Super_Secure_Secret_Key_2024_Production_Environment}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
+      CORS_ORIGINS: ${CORS_ORIGIN:-https://app.neodras.com,https://neodras.com,https://www.neodras.com}
       # Service URLs
       AUTH_SERVICE_URL: http://auth:8084
       PROPERTIES_SERVICE_URL: http://properties:8082

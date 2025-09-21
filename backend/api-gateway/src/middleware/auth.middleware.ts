@@ -33,6 +33,11 @@ export async function authenticateJWT(
   reply: FastifyReply
 ): Promise<void> {
   try {
+    // Always allow OPTIONS requests for CORS preflight
+    if (request.method === 'OPTIONS') {
+      return;
+    }
+
     // Debug logging for uploads routes
     if (request.url.startsWith('/uploads')) {
       console.log(`🔍 Auth Debug: Checking uploads route: ${request.method} ${request.url}`);
