@@ -24,8 +24,24 @@ export async function createApp() {
   });
 
   // CORS
+  console.log('🔧 CORS Configuration:', {
+    origins: config.CORS_ORIGINS,
+    environment: config.NODE_ENV
+  });
+  
   await app.register(import('@fastify/cors'), {
-    origin: config.CORS_ORIGINS,
+    origin: (origin: string | undefined, callback: (err: Error | null, allow: boolean) => void) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (config.CORS_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      console.log(`🚫 CORS: Origin ${origin} not allowed. Allowed origins:`, config.CORS_ORIGINS);
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -55,7 +71,23 @@ export async function createApp() {
   //   done(null, payload); // Pass through the raw stream
   // });
 
-  // Global authentication middleware
+  // Add CORS debug hook
+  app.addHook('onRequest', async (request: any, reply: any) => {
+    if (config.ENABLE_DETAILED_LOGGING) {
+      const origin = request.headers.origin;
+      const method = request.method;
+      const url = request.url;
+      
+      if (origin) {
+        console.log(`🌐 CORS Request: ${method} ${url} from origin: ${origin}`);
+      }
+    }
+  });
+
+  // Setup proxy routes first
+  await setupProxy(app);
+
+  // Global authentication middleware - AFTER CORS and proxy setup
   app.addHook('preHandler', authenticateJWT);
 
   // Health check
@@ -96,9 +128,6 @@ export async function createApp() {
 
     return baseInfo;
   });
-
-  // Setup PRODUCTION-READY proxy
-  await setupProxy(app as any);
 
   return app;
 }

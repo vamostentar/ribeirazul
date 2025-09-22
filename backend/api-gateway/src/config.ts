@@ -14,17 +14,23 @@ export const config = {
   CORS_ORIGINS: (() => {
     const raw = process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || process.env.CORS || '';
     if (raw && raw.trim().length > 0) {
-      return raw.split(',').map(s => s.trim());
+      const origins = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      console.log('🔧 CORS Origins loaded from environment:', origins);
+      return origins;
     }
     // Fallback to API_URL if provided
     if (process.env.API_URL) {
-      return [process.env.API_URL];
+      const fallback = [process.env.API_URL];
+      console.log('🔧 CORS Origins fallback to API_URL:', fallback);
+      return fallback;
     }
     // Development defaults
-    return [
+    const defaults = [
       'http://localhost:3001',
       'http://localhost:3000'
     ];
+    console.log('🔧 CORS Origins using development defaults:', defaults);
+    return defaults;
   })(),
 
   // Production settings
