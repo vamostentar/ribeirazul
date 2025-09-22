@@ -83,6 +83,7 @@ services:
       context: ./backend/auth-service
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
     depends_on:
       db:
         condition: service_healthy
@@ -92,10 +93,11 @@ services:
       <<: *common-env
       PORT: 8084
       HOST: "0.0.0.0"
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=auth
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGIN: ${CORS_ORIGINS}
     labels:
       # Desabilitar Traefik para Auth Service (serviço interno)
       - "traefik.enable=false"
@@ -114,6 +116,7 @@ services:
       context: ./backend/properties-service
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
     depends_on:
       db:
         condition: service_healthy
@@ -123,10 +126,11 @@ services:
       <<: *common-env
       PORT: 8082
       HOST: "0.0.0.0"
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=properties
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
       BASE_URL: ${API_URL}
       CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGIN: ${CORS_ORIGINS}
     volumes:
       - properties_uploads:/app/uploads
     labels:
@@ -147,6 +151,7 @@ services:
       context: ./backend/user-service
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
     depends_on:
       db:
         condition: service_healthy
@@ -156,9 +161,10 @@ services:
       <<: *common-env
       PORT: 8086
       HOST: "0.0.0.0"
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=users
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/4
       CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGIN: ${CORS_ORIGINS}
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
       - "traefik.enable=false"
@@ -177,6 +183,7 @@ services:
       context: ./backend/settings-service
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
     depends_on:
       db:
         condition: service_healthy
@@ -186,9 +193,10 @@ services:
       <<: *common-env
       PORT: 8085
       HOST: "0.0.0.0"
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=settings
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/3
       CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGIN: ${CORS_ORIGINS}
     labels:
       # Desabilitar Traefik para Settings Service (serviço interno)
       - "traefik.enable=false"
@@ -222,6 +230,7 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME}
       CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGIN: ${CORS_ORIGINS}
     labels:
       # Desabilitar Traefik para Media Service (serviço interno)
       - "traefik.enable=false"

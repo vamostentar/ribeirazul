@@ -49,8 +49,7 @@ RUN apk add --no-cache \
     curl \
     libc6-compat
 
-# Garantir versão correta do Yarn no runtime também
-RUN corepack enable && corepack prepare yarn@4.9.2 --activate
+# Yarn não é necessário no runtime; remover dependência de rede
 
 # Criar usuário não-root
 RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs

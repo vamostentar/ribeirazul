@@ -46,8 +46,7 @@ RUN apk add --no-cache \
     curl \
     libc6-compat
 
-# Garantir versão correta do Yarn no runtime também
-RUN corepack enable && corepack prepare yarn@4.9.2 --activate
+# Yarn não é necessário no runtime; remover dependência de rede
 
 # Criar usuário não-root
 RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
@@ -74,4 +73,4 @@ EXPOSE 8084
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8084/health || exit 1
 
-CMD ["sh", "-c", "echo 'JWT_SECRET length:' $(echo -n \"$JWT_SECRET\" | wc -c) && echo 'JWT_SECRET value:' ${JWT_SECRET:0:10}... && node dist/server.js"]
+CMD ["node", "dist/server.js"]

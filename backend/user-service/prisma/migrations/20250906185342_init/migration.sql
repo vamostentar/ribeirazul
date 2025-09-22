@@ -7,8 +7,12 @@ CREATE TYPE "public"."ContactMethod" AS ENUM ('EMAIL', 'PHONE', 'SMS', 'WHATSAPP
 -- CreateEnum
 CREATE TYPE "public"."ProfileVisibility" AS ENUM ('PUBLIC', 'PRIVATE', 'FRIENDS_ONLY');
 
--- CreateEnum
-CREATE TYPE "public"."PropertyType" AS ENUM ('APARTMENT', 'HOUSE', 'TOWNHOUSE', 'CONDO', 'STUDIO', 'LOFT', 'PENTHOUSE', 'VILLA', 'COMMERCIAL', 'LAND', 'OTHER');
+-- CreateEnum (scoped to users schema to avoid conflict with properties-service)
+DO $$ BEGIN
+    CREATE TYPE "users"."PropertyType" AS ENUM ('APARTMENT', 'HOUSE', 'TOWNHOUSE', 'CONDO', 'STUDIO', 'LOFT', 'PENTHOUSE', 'VILLA', 'COMMERCIAL', 'LAND', 'OTHER');
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateEnum
 CREATE TYPE "public"."InterestType" AS ENUM ('VIEW', 'INQUIRY', 'SCHEDULE_VISIT', 'MAKE_OFFER', 'FAVORITE');
@@ -65,7 +69,7 @@ CREATE TABLE "public"."user_profiles" (
 CREATE TABLE "public"."user_preferences" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "propertyTypes" "public"."PropertyType"[],
+    "propertyTypes" "users"."PropertyType"[],
     "minPrice" DECIMAL(65,30),
     "maxPrice" DECIMAL(65,30),
     "minBedrooms" INTEGER,
@@ -127,7 +131,7 @@ CREATE TABLE "public"."search_history" (
     "userId" TEXT NOT NULL,
     "query" TEXT,
     "location" TEXT,
-    "propertyType" "public"."PropertyType"[],
+    "propertyType" "users"."PropertyType"[],
     "minPrice" DECIMAL(65,30),
     "maxPrice" DECIMAL(65,30),
     "minBedrooms" INTEGER,
