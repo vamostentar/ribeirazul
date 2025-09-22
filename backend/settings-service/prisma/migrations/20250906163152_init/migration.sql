@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "public"."settings" (
+CREATE TABLE "settings"."settings" (
     "id" TEXT NOT NULL DEFAULT 'singleton',
     "brandName" TEXT NOT NULL DEFAULT 'Ribeira Azul',
     "logoUrl" TEXT,
@@ -28,7 +28,7 @@ CREATE TABLE "public"."settings" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."settings_history" (
+CREATE TABLE "settings"."settings_history" (
     "id" TEXT NOT NULL,
     "settingsId" TEXT NOT NULL DEFAULT 'singleton',
     "fieldName" TEXT NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE "public"."settings_history" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."module_settings" (
+CREATE TABLE "settings"."module_settings" (
     "id" TEXT NOT NULL,
     "moduleName" TEXT NOT NULL,
     "settingsKey" TEXT NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE "public"."module_settings" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "module_settings_moduleName_settingsKey_key" ON "public"."module_settings"("moduleName", "settingsKey");
+CREATE UNIQUE INDEX "module_settings_moduleName_settingsKey_key" ON "settings"."module_settings"("moduleName", "settingsKey");
 
 -- AddForeignKey
-ALTER TABLE "public"."settings_history" ADD CONSTRAINT "settings_history_settingsId_fkey" FOREIGN KEY ("settingsId") REFERENCES "public"."settings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "settings"."settings_history" ADD CONSTRAINT "settings_history_settingsId_fkey" FOREIGN KEY ("settingsId") REFERENCES "settings"."settings"("id") ON DELETE CASCADE ON UPDATE CASCADE;

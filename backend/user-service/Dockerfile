@@ -72,4 +72,4 @@ EXPOSE 8086
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8086/health || exit 1
 
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-lc", "npx prisma migrate deploy && node dist/server.js"]
