@@ -13,9 +13,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-ribeirazul}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
     command: [
       "redis-server",
-      "--requirepass", "${REDIS_PASSWORD:-changeme}",
+      "--requirepass", "${REDIS_PASSWORD}",
       "--maxmemory", "256mb",
       "--maxmemory-policy", "allkeys-lru"
     ]
@@ -48,7 +48,7 @@ services:
       # Desabilitar Traefik para Redis (serviço interno)
       - "traefik.enable=false"
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -93,7 +93,7 @@ services:
       PORT: 8084
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
-      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGINS: ${CORS_ORIGINS}
     labels:
@@ -124,7 +124,7 @@ services:
       PORT: 8082
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
-      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/1
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
       BASE_URL: ${API_URL}
       CORS_ORIGINS: ${CORS_ORIGINS}
     volumes:
@@ -157,7 +157,7 @@ services:
       PORT: 8086
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
-      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/4
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/4
       CORS_ORIGINS: ${CORS_ORIGINS}
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
@@ -187,7 +187,7 @@ services:
       PORT: 8085
       HOST: "0.0.0.0"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
-      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/3
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/3
       CORS_ORIGINS: ${CORS_ORIGINS}
     labels:
       # Desabilitar Traefik para Settings Service (serviço interno)
@@ -216,7 +216,7 @@ services:
       <<: *common-env
       PORT: 8083
       HOST: "0.0.0.0"
-      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/2
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/2
       S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
