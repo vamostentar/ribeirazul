@@ -18,8 +18,8 @@ GRANT ALL PRIVILEGES ON SCHEMA settings TO postgres;
 GRANT ALL PRIVILEGES ON SCHEMA users TO postgres;
 GRANT ALL PRIVILEGES ON SCHEMA media TO postgres;
 
--- Set search path to include all schemas
-ALTER DATABASE ribeirazul SET search_path TO public, auth, properties, settings, users, media;
+-- Set default search_path at role level (independente do nome da base)
+ALTER ROLE postgres SET search_path TO public, auth, properties, settings, users, media;
 
 -- Create extensions if needed
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
