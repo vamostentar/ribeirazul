@@ -1,3 +1,6 @@
+-- Ensure schema exists for settings
+CREATE SCHEMA IF NOT EXISTS "settings";
+
 -- CreateTable
 CREATE TABLE "settings"."settings" (
     "id" TEXT NOT NULL DEFAULT 'singleton',
