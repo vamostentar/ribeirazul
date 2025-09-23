@@ -64,6 +64,31 @@ const configSchema = z.object({
 export type Config = z.infer<typeof configSchema>;
 
 /**
+ * Normalize allowed CORS origins to include both www and non-www variants.
+ * Accepts CSV string or array and returns unique origins.
+ */
+export function getCorsOrigins(raw?: string | string[]) {
+  const corsVar = raw || process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || process.env.API_URL || '';
+  const arr = (typeof corsVar === 'string' ? corsVar.split(',') : corsVar).map((s: string) => s.trim()).filter(Boolean);
+  const normalized = new Set<string>();
+  for (const o of arr) {
+    try {
+      const u = new URL(o);
+      normalized.add(u.origin);
+      const host = u.hostname;
+      if (host.startsWith('www.')) {
+        normalized.add(`${u.protocol}//${host.replace(/^www\./, '')}`);
+      } else {
+        normalized.add(`${u.protocol}//www.${host}`);
+      }
+    } catch (e) {
+      if (typeof o === 'string' && o.length) normalized.add(o);
+    }
+  }
+  return Array.from(normalized);
+}
+
+/**
  * Serviço de configuração centralizado
  * Singleton pattern para acesso global às configurações
  */

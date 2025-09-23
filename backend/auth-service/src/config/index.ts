@@ -166,7 +166,31 @@ class ConfigService {
   get corsOrigins(): string[] {
     // Support both CORS_ORIGINS and CORS_ORIGIN for compatibility
     const corsVar = process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || this._config.CORS_ORIGIN;
-    return corsVar.split(',').map(origin => origin.trim());
+    // inline normalizeOrigins to avoid cross-package import issues
+    const normalize = (originsRaw?: string | string[]) => {
+      if (!originsRaw) return [];
+      const arr = Array.isArray(originsRaw) ? originsRaw : (originsRaw as string).split(',').map(s => s.trim()).filter(Boolean);
+      const normalized = new Set<string>();
+      for (const o of arr) {
+        try {
+          const u = new URL(o);
+          normalized.add(u.origin);
+          const host = u.hostname;
+          if (host.startsWith('www.')) {
+            const nonWww = `${u.protocol}//${host.replace(/^www\./, '')}`;
+            normalized.add(nonWww);
+          } else {
+            const www = `${u.protocol}//www.${host}`;
+            normalized.add(www);
+          }
+        } catch (e) {
+          if (typeof o === 'string' && o.length) normalized.add(o);
+        }
+      }
+      return Array.from(normalized);
+    };
+
+    return normalize(corsVar);
   }
 
   get databaseConfig() {
@@ -252,3 +276,4 @@ export const config = {
   HELMET_ENABLED: configService.isProduction,
   TOTP_WINDOW: 2, // 2 * 30 seconds = 1 minute window
 };
+

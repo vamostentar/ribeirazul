@@ -110,8 +110,28 @@ export async function corsMiddleware(
   reply: FastifyReply
 ): Promise<void> {
   const origin = request.headers.origin;
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || 
-                        (process.env.API_URL ? [process.env.API_URL] : ['http://localhost:3001']);
+  const normalizeOrigins = (raw?: string | string[]) => {
+    const corsVar = raw || process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || process.env.API_URL || '';
+    const arr = (typeof corsVar === 'string' ? corsVar.split(',') : corsVar).map((s: string) => s.trim()).filter(Boolean);
+    const normalized = new Set<string>();
+    for (const o of arr) {
+      try {
+        const u = new URL(o);
+        normalized.add(u.origin);
+        const host = u.hostname;
+        if (host.startsWith('www.')) {
+          normalized.add(`${u.protocol}//${host.replace(/^www\./, '')}`);
+        } else {
+          normalized.add(`${u.protocol}//www.${host}`);
+        }
+      } catch (e) {
+        if (typeof o === 'string' && o.length) normalized.add(o);
+      }
+    }
+    return Array.from(normalized);
+  };
+
+  const allowedOrigins = normalizeOrigins(process.env.CORS_ORIGIN);
 
   if (origin && allowedOrigins.includes(origin)) {
     reply.header('Access-Control-Allow-Origin', origin);

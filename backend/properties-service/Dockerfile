@@ -66,6 +66,10 @@ COPY --from=builder /app/prisma ./prisma
 RUN mkdir -p /app/uploads/properties/images /app/uploads/properties/thumbnails && \
     chown -R nodeuser:nodejs /app
 
+# Copy entrypoint and make executable before dropping privileges
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 USER nodeuser
 
 EXPOSE 8082
@@ -73,5 +77,5 @@ EXPOSE 8082
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8082/health || exit 1
-
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
 CMD ["node", "dist/server.js"]

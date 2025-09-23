@@ -73,4 +73,6 @@ EXPOSE 8084
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8084/health || exit 1
 
+# Use entrypoint script to wait for dependencies and run migrations reliably
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
 CMD ["node", "dist/server.js"]

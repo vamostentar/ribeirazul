@@ -13,14 +13,36 @@ export const config = {
   // CORS Origins (accept both CORS_ORIGINS and CORS_ORIGIN)
   CORS_ORIGINS: (() => {
     const raw = process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || process.env.CORS || '';
-    if (raw && raw.trim().length > 0) {
-      const origins = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
-      console.log('🔧 CORS Origins loaded from environment:', origins);
-      return origins;
+    const normalize = (originsRaw?: string | string[]) => {
+      const corsVar = originsRaw || '';
+      if (!corsVar) return [] as string[];
+      const arr = (typeof corsVar === 'string' ? corsVar.split(',') : corsVar).map(s => s.trim()).filter(s => s.length > 0);
+      const normalized = new Set<string>();
+      for (const o of arr) {
+        try {
+          const u = new URL(o);
+          normalized.add(u.origin);
+          const host = u.hostname;
+          if (host.startsWith('www.')) {
+            normalized.add(`${u.protocol}//${host.replace(/^www\./, '')}`);
+          } else {
+            normalized.add(`${u.protocol}//www.${host}`);
+          }
+        } catch (e) {
+          if (typeof o === 'string' && o.length) normalized.add(o);
+        }
+      }
+      return Array.from(normalized);
+    };
+
+    const normalized = normalize(raw);
+    if (normalized.length > 0) {
+      console.log('🔧 CORS Origins loaded from environment:', normalized);
+      return normalized;
     }
     // Fallback to API_URL if provided
     if (process.env.API_URL) {
-      const fallback = [process.env.API_URL];
+      const fallback = normalize([process.env.API_URL]);
       console.log('🔧 CORS Origins fallback to API_URL:', fallback);
       return fallback;
     }
