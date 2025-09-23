@@ -23,10 +23,10 @@ x-production-env: &production-env
   JWT_SECRET: ${JWT_SECRET}
 
   # CORS Configuration
-  CORS_ORIGIN: ${CORS_ORIGIN:-https://www.neodras.com}
+  CORS_ORIGIN: ${CORS_ORIGIN:-https://neodras.com}
 
   # API Configuration
-  API_URL: ${API_URL:-https://www.neodras.com}
+  API_URL: ${API_URL:-https://neodras.com}
 
   # MinIO Configuration
   MINIO_ROOT_USER: ${MINIO_ROOT_USER}
