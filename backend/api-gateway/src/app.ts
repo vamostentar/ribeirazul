@@ -66,21 +66,8 @@ export async function createApp() {
     maxAge: 86400, // 24 hours
   });
 
-  // Ensure preflight requests are always handled, even if no route matches
-  app.options('/*', async (request: any, reply: any) => {
-    const origin = request.headers.origin;
-    const allowed = !origin || config.CORS_ORIGINS.includes(origin);
-    if (allowed && origin) {
-      reply.header('Access-Control-Allow-Origin', origin);
-    }
-    reply
-      .header('Access-Control-Allow-Credentials', 'true')
-      .header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
-      .header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Request-ID, X-Correlation-ID, X-API-Key, Accept, Origin, Cache-Control, Pragma')
-      .header('Vary', 'Origin')
-      .code(204)
-      .send();
-  });
+  // Preflight OPTIONS requests são geridos automaticamente por @fastify/cors.
+  // Evitamos declarar manualmente uma rota OPTIONS global para não duplicar.
 
   // DISABLE multipart processing completely - let proxy handle it natively
   // app.addContentTypeParser('multipart/form-data', function (request, payload, done) {
