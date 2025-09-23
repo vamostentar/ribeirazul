@@ -66,6 +66,22 @@ export async function createApp() {
     maxAge: 86400, // 24 hours
   });
 
+  // Ensure preflight requests are always handled, even if no route matches
+  app.options('/*', async (request: any, reply: any) => {
+    const origin = request.headers.origin;
+    const allowed = !origin || config.CORS_ORIGINS.includes(origin);
+    if (allowed && origin) {
+      reply.header('Access-Control-Allow-Origin', origin);
+    }
+    reply
+      .header('Access-Control-Allow-Credentials', 'true')
+      .header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+      .header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Request-ID, X-Correlation-ID, X-API-Key, Accept, Origin, Cache-Control, Pragma')
+      .header('Vary', 'Origin')
+      .code(204)
+      .send();
+  });
+
   // DISABLE multipart processing completely - let proxy handle it natively
   // app.addContentTypeParser('multipart/form-data', function (request, payload, done) {
   //   done(null, payload); // Pass through the raw stream
@@ -82,6 +98,17 @@ export async function createApp() {
         console.log(`🌐 CORS Request: ${method} ${url} from origin: ${origin}`);
       }
     }
+  });
+
+  // Force CORS headers on every response (including errors/404)
+  app.addHook('onSend', async (request: any, reply: any, payload: any) => {
+    const origin = request.headers.origin;
+    if (origin && config.CORS_ORIGINS.includes(origin)) {
+      reply.header('Access-Control-Allow-Origin', origin);
+      reply.header('Vary', 'Origin');
+    }
+    reply.header('Access-Control-Allow-Credentials', 'true');
+    return payload;
   });
 
   // Setup proxy routes first
