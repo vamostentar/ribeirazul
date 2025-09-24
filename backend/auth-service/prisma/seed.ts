@@ -1,6 +1,6 @@
+import { config } from '@/config';
+import { hashPassword } from '@/utils/crypto';
 import { PrismaClient } from '@prisma/client';
-import { config } from '../src/config';
-import { hashPassword } from '../src/utils/crypto';
 
 const prisma = new PrismaClient();
 

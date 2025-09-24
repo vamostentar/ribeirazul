@@ -31,7 +31,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:reset": "prisma migrate reset --force",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed": "node dist/prisma/seed.js",
     "docker:build": "docker build -t auth-service .",
     "docker:run": "docker run -p 8084:8084 auth-service",
     "clean": "rm -rf dist",
@@ -40,7 +40,7 @@
     "format": "prettier --write \"src/**/*.{ts,json}\""
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node dist/prisma/seed.js"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
