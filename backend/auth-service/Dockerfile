@@ -56,6 +56,8 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+## Seed precisa de imports TypeScript de ../src; incluir código-fonte no runtime
+COPY --from=builder /app/src ./src
 
 # Script de entrada para executar migrações e iniciar o servidor (v2 com corepack/yarn)
 COPY docker-entrypoint-v2.sh /app/docker-entrypoint.sh
