@@ -78,4 +78,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Use entrypoint script to wait for dependencies and run migrations reliably
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/src/server.js"]
