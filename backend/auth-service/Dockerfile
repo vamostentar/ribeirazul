@@ -57,15 +57,18 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Script de entrada para executar migrações e iniciar o servidor
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+# Script de entrada para executar migrações e iniciar o servidor (v2 com corepack/yarn)
+COPY docker-entrypoint-v2.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
+
+# Corepack já foi usado no build; no runtime evitamos instalação global
 
 # Preparar diretórios de logs e permissões
 RUN mkdir -p /app/logs && \
     chown -R nodeuser:nodejs /app
 
-USER nodeuser
+# IMPORTANTE: Executar migrações como root, depois mudar para nodeuser
+# Não mudar para nodeuser ainda - o entrypoint precisa de permissões para migrações
 
 EXPOSE 8084
 
