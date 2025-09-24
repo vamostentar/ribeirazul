@@ -1,5 +1,6 @@
-import { verify as verifyJwt } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
+const { verify: verifyJwt } = jwt as unknown as { verify: typeof jwt.verify };
 
 export interface JWTPayload {
   sub: string;
