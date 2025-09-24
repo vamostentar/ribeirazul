@@ -83,7 +83,7 @@ services:
       context: ./backend/auth-service
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
+    # Removed command - let docker-entrypoint.sh handle migrations
     depends_on:
       db:
         condition: service_healthy
@@ -117,7 +117,7 @@ services:
       context: ./backend/properties-service
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
+    # Removed command - let docker-entrypoint.sh handle migrations
     depends_on:
       db:
         condition: service_healthy
@@ -152,7 +152,7 @@ services:
       context: ./backend/user-service
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
+    # Removed command - let docker-entrypoint.sh handle migrations
     depends_on:
       db:
         condition: service_healthy
@@ -185,7 +185,7 @@ services:
       context: ./backend/settings-service
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: sh -lc "npx prisma migrate deploy && node dist/server.js"
+    # Removed command - let docker-entrypoint.sh handle migrations
     depends_on:
       db:
         condition: service_healthy
