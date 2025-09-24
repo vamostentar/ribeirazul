@@ -301,7 +301,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.production
       args:
-        VITE_API_URL: ${API_URL:-https://www.neodras.com}
+        # Don't set VITE_API_URL - let frontend use relative URLs to avoid CORS
         NODE_ENV: production
     restart: unless-stopped
     depends_on:

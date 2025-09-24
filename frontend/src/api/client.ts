@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+// Use relative URLs in production to leverage nginx proxy
+// This avoids CORS issues and uses the same origin
+export const API_URL = import.meta.env.VITE_API_URL || 
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+    ? '' // Empty string for relative URLs in production
+    : 'http://localhost:8081'); // Full URL only for local development
 
 type TokenBundle = {
   accessToken: string | null;
