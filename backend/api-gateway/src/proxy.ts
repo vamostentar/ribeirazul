@@ -17,11 +17,14 @@ export async function setupProxy(app: FastifyInstance) {
 
   // Standard header processing for all proxies
   const standardHeaderProcessor = (originalReq: any, headers: IncomingHttpHeaders) => {
+    // Prefer any existing X-Forwarded-Proto header from the front proxy (may be lower/upper case)
+    const incomingXfp = (headers['x-forwarded-proto'] || headers['X-Forwarded-Proto'] || headers['X-Forwarded-PRoto']) as string | undefined;
+
     const processedHeaders: IncomingHttpHeaders = {
       ...headers,
       'x-forwarded-by': 'api-gateway',
       'x-forwarded-for': originalReq.ip,
-      'x-forwarded-proto': originalReq.protocol,
+      'x-forwarded-proto': incomingXfp || originalReq.protocol,
     };
     
     // Pass authenticated user information to backend services

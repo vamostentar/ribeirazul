@@ -19,9 +19,10 @@ echo "   - Frontend: $DOMAIN"
 echo "   - API: $API_DOMAIN"
 echo ""
 
-# Parar nginx se estiver rodando
-echo "🛑 Parando serviços web temporariamente..."
-docker-compose -f docker-compose.production.yml stop web nginx-proxy 2>/dev/null || true
+# Note: this script only obtains certificates. TLS termination is expected to be
+# handled by Coolify (or another external reverse proxy). We no longer stop or
+# configure a local nginx instance.
+echo "ℹ️ Obtendo certificados SSL (Coolify deve gerenciar TLS/Proxy)"
 
 # Obter certificados
 echo "📜 Obtendo certificados SSL..."
@@ -48,106 +49,7 @@ else
     exit 1
 fi
 
-# Atualizar configuração nginx para HTTPS
-echo "🔧 Atualizando configuração nginx para HTTPS..."
-
-# Criar configuração nginx com SSL
-cat > frontend/nginx-site-ssl.conf << EOF
-# Redirect HTTP to HTTPS
-server {
-    listen 80;
-    server_name $DOMAIN $API_DOMAIN;
-    return 301 https://\$server_name\$request_uri;
-}
-
-# Frontend HTTPS
-server {
-    listen 443 ssl http2;
-    server_name $DOMAIN;
-
-    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
-    
-    # SSL Security
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    
-    # Security Headers
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    
-    root /usr/share/nginx/html;
-    index index.html;
-
-    # Health endpoint
-    location = /health {
-        add_header Content-Type text/plain;
-        return 200 'ok';
-    }
-
-    # API proxy
-    location /api/ {
-        proxy_pass http://api-gateway:8081;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header Connection "";
-        proxy_read_timeout 60s;
-        proxy_send_timeout 60s;
-    }
-
-    # Static assets with long cache
-    location ~* \.(?:js|mjs|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        try_files \$uri =404;
-    }
-
-    # Client-side routing
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-}
-
-# API HTTPS
-server {
-    listen 443 ssl http2;
-    server_name $API_DOMAIN;
-
-    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
-    
-    # SSL Security
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-    
-    # Security Headers
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    
-    location / {
-        proxy_pass http://api-gateway:8081;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header Connection "";
-        proxy_read_timeout 60s;
-        proxy_send_timeout 60s;
-    }
-}
-EOF
-
-echo "✅ Configuração nginx SSL criada"
+echo "✅ Certificados colocados em ./ssl/ — configure seu provider (Coolify) para usá-los ou deixe Coolify gerenciar automaticamente."
 
 # Configurar auto-renovação
 echo "🔄 Configurando auto-renovação SSL..."

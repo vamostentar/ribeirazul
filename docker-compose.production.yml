@@ -355,13 +355,9 @@ services:
         NODE_ENV: production
     container_name: rz_web_prod
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./ssl:/etc/letsencrypt:ro
-      - ./frontend/nginx-production.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend/nginx-site.conf:/etc/nginx/conf.d/default.conf:ro
+    # Let Coolify handle ports and TLS termination; expose port 80 internally
+    expose:
+      - "80"
     depends_on:
       api-gateway:
         condition: service_healthy
@@ -380,27 +376,7 @@ services:
         reservations:
           memory: 128M
 
-  # ====================================
-  # Nginx Reverse Proxy (Optional - for SSL)
-  # ====================================
-  nginx-proxy:
-    image: nginx:alpine
-    container_name: rz_nginx_proxy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/proxy.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/letsencrypt:ro
-      - ./nginx/sites:/etc/nginx/sites-enabled:ro
-    depends_on:
-      - web
-      - api-gateway
-    networks:
-      - frontend
-    profiles:
-      - with-ssl
+  # Nginx reverse proxy removed — Coolify will manage TLS / reverse proxy
 
 networks:
   backend:
