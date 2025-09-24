@@ -5,7 +5,7 @@ import { setupProxy } from './proxy.js';
 
 export async function createApp() {
   const app = Fastify({
-    logger: config.NODE_ENV === 'production' 
+    logger: config.NODE_ENV === 'production'
       ? { level: config.LOG_LEVEL }
       : {
           level: config.LOG_LEVEL,
@@ -26,42 +26,44 @@ export async function createApp() {
   // CORS
   console.log('🔧 CORS Configuration:', {
     origins: config.CORS_ORIGINS,
-    environment: config.NODE_ENV
+    environment: config.NODE_ENV,
   });
-  
+
+  // Helper to determine if an origin is allowed, considering www/non-www variants
+  const isOriginAllowed = (origin?: string): boolean => {
+    if (!origin) return true; // allow non-origin requests (curl, mobile)
+    try {
+      const incoming = new URL(origin);
+      const incomingOrigin = `${incoming.protocol}//${incoming.hostname}` + (incoming.port ? `:${incoming.port}` : '');
+      const variants = new Set<string>();
+      variants.add(incomingOrigin);
+      const host = incoming.hostname;
+      if (host.startsWith('www.')) {
+        variants.add(`${incoming.protocol}//${host.replace(/^www\./, '')}`);
+      } else {
+        variants.add(`${incoming.protocol}//www.${host}`);
+      }
+
+      // Also include the raw origin
+      variants.add(origin);
+
+      for (const v of variants) {
+        if (config.CORS_ORIGINS.includes(v)) return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  };
+
   await app.register(import('@fastify/cors'), {
     origin: (origin: string | undefined, callback: (err: Error | null, allow: boolean) => void) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
+      // allow requests with no origin
       if (!origin) return callback(null, true);
-
-      try {
-        const incoming = new URL(origin);
-        const incomingOrigin = `${incoming.protocol}//${incoming.hostname}` + (incoming.port ? `:${incoming.port}` : '');
-
-        // Helper to generate www/non-www permutations
-        const variants = new Set<string>();
-        variants.add(incomingOrigin);
-        const host = incoming.hostname;
-        if (host.startsWith('www.')) {
-          variants.add(`${incoming.protocol}//${host.replace(/^www\./, '')}`);
-        } else {
-          variants.add(`${incoming.protocol}//www.${host}`);
-        }
-
-        // Also consider origins in config (already normalized) and check against variants
-        for (const v of variants) {
-          if (config.CORS_ORIGINS.includes(v)) {
-            return callback(null, true);
-          }
-        }
-
-        console.log(`🚫 CORS: Origin ${origin} not allowed. Allowed origins:`, config.CORS_ORIGINS);
-        return callback(new Error('Not allowed by CORS'), false);
-      } catch (err) {
-        // If origin is malformed, deny
-        console.log('🚫 CORS: Malformed origin', origin);
-        return callback(new Error('Not allowed by CORS'), false);
-      }
+      const allowed = isOriginAllowed(origin);
+      if (allowed) return callback(null, true);
+      console.log(`🚫 CORS: Origin ${origin} not allowed. Allowed origins:`, config.CORS_ORIGINS);
+      return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -75,14 +77,14 @@ export async function createApp() {
       'Accept',
       'Origin',
       'Cache-Control',
-      'Pragma'
+      'Pragma',
     ],
     exposedHeaders: [
       'X-Request-ID',
       'X-Correlation-ID',
       'X-RateLimit-Limit',
       'X-RateLimit-Remaining',
-      'X-RateLimit-Reset'
+      'X-RateLimit-Reset',
     ],
     maxAge: 86400, // 24 hours
   });
