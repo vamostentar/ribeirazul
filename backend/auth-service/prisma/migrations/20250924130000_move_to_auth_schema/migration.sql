@@ -173,25 +173,66 @@ CREATE UNIQUE INDEX IF NOT EXISTS "password_resets_token_key" ON "auth"."passwor
 CREATE UNIQUE INDEX IF NOT EXISTS "email_verifications_token_key" ON "auth"."email_verifications"("token");
 CREATE UNIQUE INDEX IF NOT EXISTS "api_keys_keyHash_key" ON "auth"."api_keys"("keyHash");
 
--- Foreign keys
-ALTER TABLE "auth"."users"
-  ADD CONSTRAINT IF NOT EXISTS "users_roleId_fkey"
-  FOREIGN KEY ("roleId") REFERENCES "auth"."roles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign keys (conditional creation since PostgreSQL doesn't support IF NOT EXISTS on ADD CONSTRAINT)
 
-ALTER TABLE "auth"."sessions"
-  ADD CONSTRAINT IF NOT EXISTS "sessions_userId_fkey"
-  FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_namespace n ON n.oid = c.connamespace
+    WHERE c.conname = 'users_roleId_fkey' AND n.nspname = 'auth'
+  ) THEN
+    ALTER TABLE "auth"."users"
+      ADD CONSTRAINT "users_roleId_fkey"
+      FOREIGN KEY ("roleId") REFERENCES "auth"."roles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE "auth"."refresh_tokens"
-  ADD CONSTRAINT IF NOT EXISTS "refresh_tokens_userId_fkey"
-  FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_namespace n ON n.oid = c.connamespace
+    WHERE c.conname = 'sessions_userId_fkey' AND n.nspname = 'auth'
+  ) THEN
+    ALTER TABLE "auth"."sessions"
+      ADD CONSTRAINT "sessions_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE "auth"."login_attempts"
-  ADD CONSTRAINT IF NOT EXISTS "login_attempts_userId_fkey"
-  FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_namespace n ON n.oid = c.connamespace
+    WHERE c.conname = 'refresh_tokens_userId_fkey' AND n.nspname = 'auth'
+  ) THEN
+    ALTER TABLE "auth"."refresh_tokens"
+      ADD CONSTRAINT "refresh_tokens_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE "auth"."audit_logs"
-  ADD CONSTRAINT IF NOT EXISTS "audit_logs_userId_fkey"
-  FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_namespace n ON n.oid = c.connamespace
+    WHERE c.conname = 'login_attempts_userId_fkey' AND n.nspname = 'auth'
+  ) THEN
+    ALTER TABLE "auth"."login_attempts"
+      ADD CONSTRAINT "login_attempts_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_namespace n ON n.oid = c.connamespace
+    WHERE c.conname = 'audit_logs_userId_fkey' AND n.nspname = 'auth'
+  ) THEN
+    ALTER TABLE "auth"."audit_logs"
+      ADD CONSTRAINT "audit_logs_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "auth"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 
