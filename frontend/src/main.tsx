@@ -1,10 +1,15 @@
-import { lazy, Suspense } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/context/AuthContext';
+import { lazy, Suspense } from 'react';
 
 // Eager load critical pages
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import './index.css';
 
 // Lazy load non-critical pages
 const PropertyDetails = lazy(() => import('@/pages/PropertyDetails'));
@@ -19,13 +24,21 @@ const PropertiesManagement = lazy(() => import('@/pages/admin/PropertiesManageme
 const PropertyImages = lazy(() => import('@/pages/admin/PropertyImages'));
 const Settings = lazy(() => import('@/pages/admin/Settings'));
 const UsersManagement = lazy(() => import('@/pages/admin/UsersManagement'));
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import './index.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Disable automatic retries and background refetches to avoid flooding the API
+      retry: 0,
+      refetchOnWindowFocus: false,
+      // short retryDelay in case something triggers a retry manually
+      retryDelay: 1000,
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
 
 // Loading component for Suspense
 import Loading from '@/components/Loading';
