@@ -1,4 +1,4 @@
-import * as jwt from 'jsonwebtoken';
+import { verify as verifyJwt } from 'jsonwebtoken';
 import { config } from '../config.js';
 
 export interface JWTPayload {
@@ -82,7 +82,7 @@ export async function authenticateJWT(
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify JWT token
-    const decoded = jwt.verify(token, getJWTSecret(), {
+    const decoded = verifyJwt(token, getJWTSecret(), {
       issuer: 'ribeirazul-auth-service',
       audience: 'ribeirazul-api',
     }) as JWTPayload;
