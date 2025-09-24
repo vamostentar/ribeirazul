@@ -56,7 +56,6 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/dist/prisma ./dist/prisma
 
 # Script de entrada para executar migrações e iniciar o servidor (v2 com corepack/yarn)
 COPY docker-entrypoint-v2.sh /app/docker-entrypoint.sh

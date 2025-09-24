@@ -40,7 +40,7 @@
     "format": "prettier --write \"src/**/*.{ts,json}\""
   },
   "prisma": {
-    "seed": "node dist/prisma/seed.js"
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
