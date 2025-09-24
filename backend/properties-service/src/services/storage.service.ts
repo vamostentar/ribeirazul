@@ -40,11 +40,9 @@ export class StorageService {
     // Use absolute path within container for uploads directory
     this.uploadsDir = path.resolve('/app/uploads');
     // Use configuration-based BASE_URL with proper fallbacks
-    this.baseUrl = config.BASE_URL || 
-      process.env.API_URL || 
-      (config.isProduction 
-        ? 'https://www.neodras.com'
-        : `http://localhost:${config.PORT}`);
+    this.baseUrl = config.BASE_URL || process.env.API_URL || '';
+    // In production behind nginx, prefer relative / absolute host from request via gateway.
+    // When baseUrl is empty, we still generate relative URLs which the frontend will resolve via nginx.
 
     console.log('📁 Storage service initialized:', {
       uploadsDir: this.uploadsDir,
@@ -294,7 +292,7 @@ export class StorageService {
         originalName,
         filename,
         path: imagePath,
-        url: `${this.baseUrl}/uploads/properties/images/${filename}`,
+        url: this.baseUrl ? `${this.baseUrl}/uploads/properties/images/${filename}` : `/uploads/properties/images/${filename}`,
         size: stats.size,
         mimeType: 'image/jpeg',
         width: metadata.width,
@@ -324,7 +322,7 @@ export class StorageService {
         result.thumbnail = {
           filename: thumbnailFilename,
           path: thumbnailPath,
-          url: `${this.baseUrl}/uploads/properties/thumbnails/${thumbnailFilename}`,
+          url: this.baseUrl ? `${this.baseUrl}/uploads/properties/thumbnails/${thumbnailFilename}` : `/uploads/properties/thumbnails/${thumbnailFilename}`,
         };
 
         console.log('✅ Storage: Thumbnail generated');
