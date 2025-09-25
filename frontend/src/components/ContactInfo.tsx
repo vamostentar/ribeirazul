@@ -19,8 +19,8 @@ export function ContactInfo() {
           }
           title="WhatsApp"
           description="Fale conosco agora"
-          contact="+351 966 997 567"
-          href="https://wa.me/351966997657"
+          contact="+351 969 272 037"
+          href="https://wa.me/351969272037"
           bgColor="bg-green-500"
           textColor="text-green-500"
         />
@@ -48,8 +48,8 @@ export function ContactInfo() {
           }
           title="Escritório"
           description="Visite-nos pessoalmente"
-          contact="Rua António Sacramento 3A, 2725-169 Mem Martins"
-          href="https://maps.google.com/?q=Lisboa+Portugal"
+          contact="Rua das Eiras nº 61 R/C Dt, 2725-297 Mem Martins"
+          href="https://maps.app.goo.gl/434JPrMjixQUNEUY9"
           bgColor="bg-amber-500"
           textColor="text-amber-500"
         />
@@ -61,11 +61,11 @@ export function ContactInfo() {
         <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
           <div>
             <h4 className="font-semibold mb-2">Segunda a Sexta</h4>
-            <p className="text-blue-100">9h00 às 18h00</p>
+            <p className="text-blue-100">9h00 às 20h00</p>
           </div>
           <div>
             <h4 className="font-semibold mb-2">Sábados</h4>
-            <p className="text-blue-100">9h00 às 14h00</p>
+            <p className="text-blue-100">9h00 às 19h00</p>
           </div>
         </div>
       </div>
