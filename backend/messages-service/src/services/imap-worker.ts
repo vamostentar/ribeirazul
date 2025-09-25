@@ -1,4 +1,4 @@
-import { config } from '@/utils/config.js';
+import { config } from '@/utils/config';
 import { PrismaClient } from '@prisma/client';
 import { ImapFlow } from 'imapflow';
 

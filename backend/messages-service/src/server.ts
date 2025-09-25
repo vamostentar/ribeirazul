@@ -1,5 +1,5 @@
-import { registerMessageRoutes } from '@/routes/messages.js';
-import { config } from '@/utils/config.js';
+import { registerMessageRoutes } from '@/routes/messages';
+import { config } from '@/utils/config';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';

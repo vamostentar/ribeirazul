@@ -67,7 +67,9 @@ RUN mkdir -p /app/logs && \
 
 # Copy entrypoint and make executable
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+# Normalizar final de linha (CRLF -> LF) para evitar erro "set: illegal option -"
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && \
+    chmod +x /app/docker-entrypoint.sh
 
 # Mantém como root para executar migrações, o entrypoint muda para nodeuser após migrações
 # USER nodeuser - comentado, será feito no entrypoint

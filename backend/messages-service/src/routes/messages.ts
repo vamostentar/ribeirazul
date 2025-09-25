@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import { sendContactEmail } from '@/services/mailer.js';
+import { sendContactEmail } from '@/services/mailer';
 
 const createMessageSchema = z.object({
   fromName: z.string().min(2),
