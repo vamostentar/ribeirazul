@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "🚀 Properties Service entrypoint: waiting for dependencies..."
+echo "🚀 Messages Service entrypoint: waiting for dependencies..."
 echo "🔍 Running as user: $(whoami)"
 
 if [ -n "${DATABASE_URL:-}" ]; then
@@ -36,6 +36,7 @@ else
   exit 1
 fi
 
+# Check server file
 if [ ! -f "dist/server.js" ]; then
   echo "❌ dist/server.js not found"
   ls -la dist || true

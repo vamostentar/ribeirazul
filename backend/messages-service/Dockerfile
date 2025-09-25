@@ -16,8 +16,8 @@ RUN apk add --no-cache \
 # Yarn Berry via Corepack - forçar versão específica
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
-# Copiar manifesto primeiro para melhor cache
-COPY package.json ./
+# Copiar manifestos primeiro para melhor cache
+COPY package.json yarn.lock* .yarnrc.yml ./
 
 # Forçar nodeLinker node-modules para compat com Docker
 RUN echo "nodeLinker: node-modules" > .yarnrc.yml && \
@@ -52,7 +52,6 @@ RUN apk add --no-cache \
     postgresql-client \
     su-exec
 
-
 # Criar usuário não-root
 RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
 
@@ -66,21 +65,20 @@ COPY --from=builder /app/prisma ./prisma
 RUN mkdir -p /app/logs && \
     chown -R nodeuser:nodejs /app
 
-# Copy entrypoint and set executable
+# Copy entrypoint and make executable
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-# Normalizar final de linha (CRLF -> LF) para evitar erro "set: illegal option -"
-RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && \
-    chmod +x /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Mantém como root para executar migrações, o entrypoint muda para nodeuser após migrações
 # USER nodeuser - comentado, será feito no entrypoint
 
-EXPOSE 8086
+EXPOSE 8090
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8086/health || exit 1
+  CMD curl -f http://localhost:8090/health || exit 1
 
-# Use entrypoint to run migrations and start
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
 CMD ["node", "dist/server.js"]
+
+

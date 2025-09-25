@@ -20,6 +20,8 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para PostgreSQL (serviço interno)
       - "traefik.enable=false"
@@ -44,6 +46,8 @@ services:
     ]
     volumes:
       - redis_data:/data
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para Redis (serviço interno)
       - "traefik.enable=false"
@@ -66,6 +70,8 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para MinIO (serviço interno)
       - "traefik.enable=false"
@@ -100,6 +106,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://neodras.com,https://www.neodras.com}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://neodras.com,https://www.neodras.com}
       API_URL: ${API_URL:-https://www.neodras.com}
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para Auth Service (serviço interno)
       - "traefik.enable=false"
@@ -135,6 +143,8 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-https://neodras.com,https://www.neodras.com}
     volumes:
       - properties_uploads:/app/uploads
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para Properties Service (serviço interno)
       - "traefik.enable=false"
@@ -168,6 +178,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://neodras.com,https://www.neodras.com}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://neodras.com,https://www.neodras.com}
       API_URL: ${API_URL:-https://www.neodras.com}
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para Users Service (serviço interno)
       - "traefik.enable=false"
@@ -201,6 +213,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://neodras.com,https://www.neodras.com}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://neodras.com,https://www.neodras.com}
       API_URL: ${API_URL:-https://www.neodras.com}
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para Settings Service (serviço interno)
       - "traefik.enable=false"
@@ -236,6 +250,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-https://neodras.com,https://www.neodras.com}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://neodras.com,https://www.neodras.com}
       API_URL: ${API_URL:-https://www.neodras.com}
+    networks:
+      - backend
     labels:
       # Desabilitar Traefik para Media Service (serviço interno)
       - "traefik.enable=false"
@@ -278,21 +294,65 @@ services:
       MEDIA_SERVICE_URL: http://media:8083
       SETTINGS_SERVICE_URL: http://settings:8085
       USERS_SERVICE_URL: http://users:8086
+      MESSAGES_SERVICE_URL: http://messages:8090
       # Timeouts
       AUTH_SERVICE_TIMEOUT: 15000
       PROPERTIES_SERVICE_TIMEOUT: 15000
       MEDIA_SERVICE_TIMEOUT: 30000
       SETTINGS_SERVICE_TIMEOUT: 10000
       USERS_SERVICE_TIMEOUT: 10000
-    # REMOVER LABELS - Deixar Coolify gerir automaticamente
-    # labels:
-    #   - "traefik.enable=true"
+      MESSAGES_SERVICE_TIMEOUT: 10000
+    networks:
+      - backend
+      - frontend
+    labels:
+      # Desabilitar Traefik para API Gateway (serviço interno)
+      - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+  # ====================================
+  # Messages Service
+  # ====================================
+  messages:
+    build:
+      context: ./backend/messages-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      PORT: 8090
+      HOST: "0.0.0.0"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=messages
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      IMAP_HOST: ${IMAP_HOST}
+      IMAP_PORT: ${IMAP_PORT:-993}
+      IMAP_SECURE: ${IMAP_SECURE:-true}
+      IMAP_USER: ${IMAP_USER}
+      IMAP_PASS: ${IMAP_PASS}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - backend
+      - frontend
+    # REMOVER LABELS - Deixar Coolify gerir automaticamente
+    # labels:
+    #   - "traefik.enable=true"
 
   # ====================================
   # Frontend (Nginx)
@@ -308,8 +368,12 @@ services:
     depends_on:
       api-gateway:
         condition: service_healthy
+      messages:
+        condition: service_healthy
     environment:
       <<: *common-env
+    networks:
+      - frontend
     # REMOVER LABELS - Deixar Coolify gerir automaticamente
     # labels:
     #   - "traefik.enable=true"
@@ -332,3 +396,9 @@ volumes:
     driver: local
   properties_uploads:
     driver: local
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge

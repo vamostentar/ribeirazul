@@ -10,6 +10,7 @@ CREATE SCHEMA IF NOT EXISTS properties;
 CREATE SCHEMA IF NOT EXISTS settings;
 CREATE SCHEMA IF NOT EXISTS users;
 CREATE SCHEMA IF NOT EXISTS media;
+CREATE SCHEMA IF NOT EXISTS messages;
 
 -- Grant privileges to the default user
 GRANT ALL PRIVILEGES ON SCHEMA auth TO postgres;
@@ -17,9 +18,10 @@ GRANT ALL PRIVILEGES ON SCHEMA properties TO postgres;
 GRANT ALL PRIVILEGES ON SCHEMA settings TO postgres;
 GRANT ALL PRIVILEGES ON SCHEMA users TO postgres;
 GRANT ALL PRIVILEGES ON SCHEMA media TO postgres;
+GRANT ALL PRIVILEGES ON SCHEMA messages TO postgres;
 
 -- Set default search_path at role level (independente do nome da base)
-ALTER ROLE postgres SET search_path TO public, auth, properties, settings, users, media;
+ALTER ROLE postgres SET search_path TO public, auth, properties, settings, users, media, messages;
 
 -- Create extensions if needed
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -45,6 +47,7 @@ COMMENT ON SCHEMA properties IS 'Real estate properties and related data';
 COMMENT ON SCHEMA settings IS 'Application settings and configurations';
 COMMENT ON SCHEMA users IS 'User profiles and preferences';
 COMMENT ON SCHEMA media IS 'Media files metadata and references';
+COMMENT ON SCHEMA messages IS 'Contact messages and email communication';
 
 -- Create indexes for better performance (examples)
 -- These will be created after Prisma migrations run
@@ -53,5 +56,5 @@ COMMENT ON SCHEMA media IS 'Media files metadata and references';
 DO $$
 BEGIN
     RAISE NOTICE 'Database initialization completed successfully';
-    RAISE NOTICE 'Schemas created: auth, properties, settings, users, media';
+    RAISE NOTICE 'Schemas created: auth, properties, settings, users, media, messages';
 END $$;

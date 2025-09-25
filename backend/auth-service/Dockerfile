@@ -44,7 +44,10 @@ WORKDIR /app
 RUN apk add --no-cache \
     openssl \
     curl \
-    libc6-compat
+    libc6-compat \
+    bash \
+    postgresql-client \
+    su-exec
 
 # Yarn não é necessário no runtime; remover dependência de rede
 
@@ -57,18 +60,17 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Script de entrada para executar migrações e iniciar o servidor (v2 com corepack/yarn)
-COPY docker-entrypoint-v2.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
-
-# Corepack já foi usado no build; no runtime evitamos instalação global
+# Script de entrada para executar migrações e iniciar o servidor
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+# Normalizar final de linha (CRLF -> LF) para evitar erro "set: illegal option -"
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && \
+    chmod +x /app/docker-entrypoint.sh
 
 # Preparar diretórios de logs e permissões
 RUN mkdir -p /app/logs && \
     chown -R nodeuser:nodejs /app
 
-# IMPORTANTE: Executar migrações como root, depois mudar para nodeuser
-# Não mudar para nodeuser ainda - o entrypoint precisa de permissões para migrações
+# Mantém como root para executar migrações, o entrypoint muda para nodeuser após migrações
 
 EXPOSE 8084
 
@@ -78,4 +80,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Use entrypoint script to wait for dependencies and run migrations reliably
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/server.js"]

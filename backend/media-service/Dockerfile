@@ -13,7 +13,6 @@ FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 RUN apk add --no-cache vips openssl curl libc6-compat
-RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules

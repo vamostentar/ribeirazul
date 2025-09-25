@@ -48,10 +48,10 @@ RUN apk add --no-cache \
     vips \
     openssl \
     curl \
-    libc6-compat
-
-# Garantir versão correta do Yarn no runtime também
-RUN corepack enable && corepack prepare yarn@4.9.2 --activate
+    libc6-compat \
+    bash \
+    postgresql-client \
+    su-exec
 
 # Criar usuário não-root
 RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
@@ -66,11 +66,14 @@ COPY --from=builder /app/prisma ./prisma
 RUN mkdir -p /app/uploads/properties/images /app/uploads/properties/thumbnails && \
     chown -R nodeuser:nodejs /app
 
-# Copy entrypoint and make executable before dropping privileges
+# Copy entrypoint and make executable
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+# Normalizar final de linha (CRLF -> LF) para evitar erro "set: illegal option -"
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && \
+    chmod +x /app/docker-entrypoint.sh
 
-USER nodeuser
+# Mantém como root para executar migrações, o entrypoint muda para nodeuser após migrações
+# USER nodeuser - comentado, será feito no entrypoint
 
 EXPOSE 8082
 

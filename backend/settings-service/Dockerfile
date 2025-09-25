@@ -47,7 +47,10 @@ WORKDIR /app
 RUN apk add --no-cache \
     openssl \
     curl \
-    libc6-compat
+    libc6-compat \
+    bash \
+    postgresql-client \
+    su-exec
 
 # Yarn não é necessário no runtime; remover dependência de rede
 
@@ -64,11 +67,14 @@ COPY --from=builder /app/prisma ./prisma
 RUN mkdir -p /app/logs && \
     chown -R nodeuser:nodejs /app
 
-# Copy entrypoint and make executable before dropping privileges
+# Copy entrypoint and make executable
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+# Normalizar final de linha (CRLF -> LF) para evitar erro "set: illegal option -"
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && \
+    chmod +x /app/docker-entrypoint.sh
 
-USER nodeuser
+# Mantém como root para executar migrações, o entrypoint muda para nodeuser após migrações
+# USER nodeuser - comentado, será feito no entrypoint
 
 EXPOSE 8085
 

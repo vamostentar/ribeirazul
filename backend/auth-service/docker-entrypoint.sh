@@ -1,95 +1,54 @@
 #!/bin/sh
-set -euo pipefail
+set -e
 
 echo "🚀 Auth Service entrypoint: waiting for dependencies..."
+echo "🔍 Running as user: $(whoami)"
 
-# Helper: wait for a TCP host:port using pg_isready or nc fallback
-wait_for_postgres() {
-  local dsn="$1"
-  echo "🔁 Waiting for Postgres (DATABASE_URL) to be ready"
-  # Try using pg_isready if available
+if [ -n "${DATABASE_URL}" ]; then
+  echo "⏳ Waiting for DATABASE_URL to be ready"
   if command -v pg_isready >/dev/null 2>&1; then
+    # Extract host and port from DATABASE_URL (ignore schema parameter)
+    DB_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+    DB_PORT=$(echo "$DATABASE_URL" | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
     for i in $(seq 1 30); do
-      if pg_isready -q -d "$dsn"; then
+      if pg_isready -q -h "$DB_HOST" -p "$DB_PORT"; then
         echo "✅ Postgres is ready"
-        return 0
+        break
       fi
       sleep 1
     done
   else
-    # Fallback: attempt to connect with node's tcp via curl to localhost:5432 not reliable; just sleep
-    echo "⚠️ pg_isready not available; relying on time-based wait"
+    echo "⚠️ pg_isready not available; sleeping briefly"
     sleep 5
   fi
-  echo "❌ Postgres did not become ready"
-  return 1
-}
-
-wait_for_redis() {
-  local hostport="$1"
-  echo "🔁 Waiting for Redis at ${hostport}..."
-  for i in $(seq 1 30); do
-    if command -v redis-cli >/dev/null 2>&1; then
-      if redis-cli -h "${hostport%:*}" -p "${hostport#*:}" ping >/dev/null 2>&1; then
-        echo "✅ Redis is ready"
-        return 0
-      fi
-    fi
-    sleep 1
-  done
-  echo "⚠️ Redis did not become ready (continuing if optional)"
-  return 1
-}
-
-echo "🔍 Environment summary"
-echo "  NODE_ENV=${NODE_ENV:-}
-  DATABASE_URL=${DATABASE_URL:-}
-  REDIS_URL=${REDIS_URL:-}
-  JWT_SECRET=${JWT_SECRET:+(set)}"
-
-# Wait for DB (best-effort)
-if [ -n "${DATABASE_URL:-}" ]; then
-  wait_for_postgres "$DATABASE_URL" || echo "⚠️ Proceeding despite DB not ready"
 fi
 
-# Wait for Redis if configured
-if [ -n "${REDIS_URL:-}" ]; then
-  # parse host:port (simple)
-  REDIS_HOSTPORT=$(echo "$REDIS_URL" | sed -n 's#.*://\([^:@]*\):\?\([0-9]*\).*#\1:\2#p')
-  wait_for_redis "$REDIS_HOSTPORT" || true
-fi
+# Run migrations using local Prisma binary (no npx)
+if [ -x "/app/node_modules/.bin/prisma" ]; then
+  echo "🔨 Running Prisma migrate deploy (local binary)"
+  /app/node_modules/.bin/prisma migrate deploy || {
+    echo "⚠️ Migration failed, retrying in 5 seconds..."
+    sleep 5
+    /app/node_modules/.bin/prisma migrate deploy || echo "⚠️ Migrations failed - continuing anyway"
+  }
 
-# Run Prisma migrations with retries
-if command -v npx >/dev/null 2>&1; then
-  echo "🛠️ Running Prisma migrate deploy (with retries)"
-  attempt=0
-  until [ $attempt -ge 5 ]
-  do
-    if npx prisma migrate deploy; then
-      echo "✅ Prisma migrations applied"
-      break
-    fi
-    attempt=$((attempt+1))
-    echo "⚠️ Prisma migrate failed; retrying ($attempt/5)"
-    sleep 2
-  done
-  if [ $attempt -ge 5 ]; then
-    echo "❌ Prisma migrate failed after retries"
-    # Do not exit non-zero to allow services to start and report health; change if strict behavior desired
+  # Run seed if configured
+  if [ "${SEED_DEFAULT_ADMIN:-false}" = "true" ]; then
+    echo "🌱 Running database seed..."
+    /app/node_modules/.bin/prisma db seed || echo "⚠️ Seed may already exist"
   fi
 else
-  echo "⚠️ npx not available; skipping prisma migrate"
-fi
-
-# Ensure built artifact exists
-if [ ! -f "dist/server.js" ]; then
-  echo "❌ dist/server.js not found; listing dist/"
-  ls -la dist || true
-  # fail because server can't start
+  echo "❌ Prisma binary not found at /app/node_modules/.bin/prisma"
   exit 1
 fi
 
-echo "🎯 Starting server"
-exec "$@"
+# Check server file
+if [ ! -f "dist/server.js" ]; then
+  echo "❌ dist/server.js not found"
+  ls -la dist || true
+  exit 1
+fi
 
-
+# Switch to nodeuser for security
+echo "🔄 Switching to nodeuser for runtime security..."
+exec su-exec nodeuser "$@"

@@ -251,6 +251,17 @@ export async function setupProxy(app: FastifyInstance) {
     // No header processing for static files - keep it simple and public
   });
 
+  // 19. MESSAGES SERVICE PROXY
+  await app.register(import('@fastify/http-proxy'), {
+    upstream: (config as any).MESSAGES_SERVICE_URL || 'http://messages:8090',
+    prefix: '/api/v1/messages',
+    websocket: false,
+    rewritePrefix: '/api/v1/messages',
+    replyOptions: {
+      rewriteRequestHeaders: standardHeaderProcessor,
+    }
+  });
+
   // 18. PROJECTS PROXY
   await app.register(import('@fastify/http-proxy'), {
     upstream: config.PROPERTIES_SERVICE_URL,

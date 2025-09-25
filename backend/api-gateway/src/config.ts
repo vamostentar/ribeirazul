@@ -9,6 +9,7 @@ export const config = {
   MEDIA_SERVICE_URL: process.env.MEDIA_SERVICE_URL || 'http://media:8083',
   SETTINGS_SERVICE_URL: process.env.SETTINGS_SERVICE_URL || 'http://settings:8085',
   USERS_SERVICE_URL: process.env.USERS_SERVICE_URL || 'http://users:8086',
+  MESSAGES_SERVICE_URL: process.env.MESSAGES_SERVICE_URL || 'http://messages:8090',
 
   // CORS Origins (accept both CORS_ORIGINS and CORS_ORIGIN)
   CORS_ORIGINS: (() => {

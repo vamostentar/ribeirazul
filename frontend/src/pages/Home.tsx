@@ -1,4 +1,4 @@
-// import { api } from '@/api/client'; // usado apenas para leads - desativado para demo
+import { sendContactMessage } from '@/api/messages';
 import { useProjects, useProperties, useSettings } from '@/api/queries';
 import { ContactInfo } from '@/components/ContactInfo';
 import { Hero } from '@/components/Hero';
@@ -149,21 +149,37 @@ function LeadForm() {
     e.preventDefault();
     setSubmitting(true);
     
-    // Simula envio para demo (substituir por API real)
     try {
       setError(null);
       
-      // Simula delay de network
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Extract form data
+      const formData = new FormData(e.currentTarget);
+      const messageData = {
+        fromName: formData.get('name') as string,
+        fromEmail: formData.get('email') as string,
+        phone: formData.get('phone') as string,
+        body: formData.get('message') as string,
+        context: {
+          source: 'website_contact_form',
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          url: window.location.href
+        }
+      };
       
-      // Para demo, sempre sucesso
-      console.log('Demo: Lead enviado com sucesso!', Object.fromEntries(new FormData(e.currentTarget).entries()));
+      // Send message via API Gateway to messages service
+      const response = await sendContactMessage(messageData);
       
-      setDone(true);
-      e.currentTarget.reset();
-    } catch (e: any) {
-      console.error('Erro ao enviar lead', e);
-      setError('Não foi possível enviar. Tente novamente.');
+      if (response.success) {
+        console.log('Mensagem enviada com sucesso!', response.data);
+        setDone(true);
+        e.currentTarget.reset();
+      } else {
+        throw new Error(response.error || 'Falha no envio');
+      }
+    } catch (error: any) {
+      console.error('Erro ao enviar mensagem:', error);
+      setError(error.message || 'Não foi possível enviar. Tente novamente.');
     } finally {
       setSubmitting(false);
     }

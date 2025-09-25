@@ -148,6 +148,12 @@ function isPublicRoute(url: string, method: string): boolean {
     return true;
   }
   
+  // Public contact form endpoint (messages service)
+  if (url.startsWith('/api/v1/messages') && method === 'POST') {
+    // Allow public contact form submissions
+    return true;
+  }
+  
   // UPLOADS - Most important fix
   if (method === 'GET' && (url === '/uploads' || url.startsWith('/uploads/'))) {
     console.log(`✅ Auth: ${url} is a public upload route`);
