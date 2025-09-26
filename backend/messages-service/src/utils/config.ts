@@ -45,13 +45,25 @@ const schema = z.object({
   REDIS_MAX_RETRIES: z.coerce.number().default(3),
   REDIS_RETRY_DELAY: z.coerce.number().default(1000),
   
-  // SMTP Configuration - TEMPORARILY OPTIONAL FOR DEBUG
-  SMTP_HOST: z.string().min(1).optional(),
-  SMTP_PORT: z.coerce.number().default(587),
-  SMTP_SECURE: z.coerce.boolean().default(false),
-  SMTP_USER: z.string().min(1).optional(),
-  SMTP_PASS: z.string().min(1).optional(),
-  EMAIL_FROM: z.string().email().optional(),
+  // SMTP Configuration - WITH SMART FALLBACKS
+  SMTP_HOST: z.string().optional().transform(val => {
+    if (val && val.trim().length > 0) return val.trim();
+    return 'send.one.com'; // Use send.one.com for SMTP
+  }),
+  SMTP_PORT: z.coerce.number().default(465), // Use 465 for send.one.com
+  SMTP_SECURE: z.coerce.boolean().default(true), // Use SSL for send.one.com
+  SMTP_USER: z.string().optional().transform(val => {
+    if (val && val.trim().length > 0) return val.trim();
+    return process.env.IMAP_USER || process.env.EMAIL_FROM || 'info@immorz.pt';
+  }),
+  SMTP_PASS: z.string().optional().transform(val => {
+    if (val && val.trim().length > 0) return val.trim();
+    return process.env.IMAP_PASS || '';
+  }),
+  EMAIL_FROM: z.string().optional().transform(val => {
+    if (val && val.trim().length > 0) return val.trim();
+    return 'info@immorz.pt';
+  }),
   EMAIL_TIMEOUT: z.coerce.number().default(30000),
   
   // IMAP Configuration - TEMPORARILY OPTIONAL FOR DEBUG
