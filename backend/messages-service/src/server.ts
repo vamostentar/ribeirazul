@@ -257,7 +257,12 @@ if (process.env.NODE_ENV !== 'test') {
       return address;
     })
     .catch((err) => {
-      logger.fatal('Failed to start server', { error: err.message });
+      logger.fatal('Failed to start server', { 
+        error: err.message, 
+        stack: err.stack,
+        name: err.name 
+      });
+      console.error('Full error object:', err);
       process.exit(1);
     });
 }

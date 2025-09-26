@@ -71,7 +71,7 @@ export class MetricsService {
     const counter = new Counter({
       name: `messages_service_${name}`,
       help,
-      labelNames,
+      labelNames: labelNames || [],
       registers: [register],
     });
     this.counters.set(name, counter);
@@ -83,7 +83,7 @@ export class MetricsService {
       name: `messages_service_${name}`,
       help,
       buckets,
-      labelNames,
+      labelNames: labelNames || [],
       registers: [register],
     });
     this.histograms.set(name, histogram);
@@ -94,7 +94,7 @@ export class MetricsService {
     const gauge = new Gauge({
       name: `messages_service_${name}`,
       help,
-      labelNames,
+      labelNames: labelNames || [],
       registers: [register],
     });
     this.gauges.set(name, gauge);

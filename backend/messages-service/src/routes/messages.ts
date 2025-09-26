@@ -1,4 +1,4 @@
-import { config } from '@/utils/config';
+import { config, configService } from '@/utils/config';
 import { createCorrelationId } from '@/utils/logger';
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -12,14 +12,29 @@ const createMessageSchema = z.object({
   context: z.any().optional(),
 });
 
+// JSON Schema for Fastify
+const createMessageJsonSchema = {
+  type: 'object',
+  required: ['fromName', 'fromEmail', 'body'],
+  properties: {
+    fromName: { type: 'string', minLength: 2, maxLength: 100 },
+    fromEmail: { type: 'string', format: 'email' },
+    phone: { type: 'string' },
+    body: { type: 'string', minLength: 5, maxLength: 5000 },
+    context: { type: 'object' }
+  },
+  additionalProperties: false
+};
+
 // Simple authentication
 async function authenticateRequest(request: FastifyRequest): Promise<boolean> {
   const apiKey = request.headers[config.API_KEY_HEADER] as string;
-  const allowedKeys = config.ALLOWED_API_KEYS;
+  const allowedKeysSet = configService.allowedApiKeys;
   
-  if (!allowedKeys) return true;
+  if (allowedKeysSet.size === 0) {
+    return true; // No API key validation if not configured
+  }
   
-  const allowedKeysSet = new Set(allowedKeys.split(',').map(key => key.trim()));
   return !!(apiKey && allowedKeysSet.has(apiKey));
 }
 
@@ -52,7 +67,7 @@ export async function registerMessageRoutes(app: FastifyInstance) {
     Body: z.infer<typeof createMessageSchema>;
   }>('/api/v1/messages', {
     schema: {
-      body: createMessageSchema,
+      body: createMessageJsonSchema,
     },
   }, async (request, reply) => {
     const startTime = Date.now();

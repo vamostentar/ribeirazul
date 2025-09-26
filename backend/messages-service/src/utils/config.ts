@@ -144,7 +144,9 @@ class ConfigService {
   }
 
   get allowedApiKeys(): Set<string> {
-    if (!this._config.ALLOWED_API_KEYS || this._config.ALLOWED_API_KEYS.trim().length === 0) {
+    if (!this._config.ALLOWED_API_KEYS || 
+        this._config.ALLOWED_API_KEYS.trim().length === 0 ||
+        this._config.ALLOWED_API_KEYS === 'your-production-api-keys-here') {
       return new Set();
     }
     return new Set(this._config.ALLOWED_API_KEYS.split(',').map(key => key.trim()).filter(Boolean));
