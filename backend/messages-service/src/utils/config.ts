@@ -110,6 +110,10 @@ class ConfigService {
       METRICS_ENABLED: this._config.METRICS_ENABLED,
       TRACING_ENABLED: this._config.TRACING_ENABLED,
       QUEUE_CONCURRENCY: this._config.QUEUE_CONCURRENCY,
+      SMTP_HOST: this._config.SMTP_HOST,
+      SMTP_PORT: this._config.SMTP_PORT,
+      SMTP_SECURE: this._config.SMTP_SECURE,
+      SMTP_VERIFY_CONNECTION: this._config.SMTP_VERIFY_CONNECTION,
     });
   }
 

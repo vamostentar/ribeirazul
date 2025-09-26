@@ -47,10 +47,11 @@ export class EmailService {
         nodeEnv: config.NODE_ENV
       });
 
-      this.transporter = nodemailer.createTransport({
+      // Configure transporter based on port and security settings
+      const transportConfig: any = {
         host: config.SMTP_HOST,
         port: config.SMTP_PORT,
-        secure: config.SMTP_SECURE,
+        secure: config.SMTP_SECURE, // true for port 465, false for other ports
         auth: {
           user: config.SMTP_USER,
           pass: config.SMTP_PASS,
@@ -63,13 +64,40 @@ export class EmailService {
         maxMessages: 100,
         rateLimit: 14, // messages per second
         rateDelta: 1000, // 1 second
-        // Add additional options for better SSL/TLS handling
-        tls: {
+      };
+
+      // Configure TLS based on port and security settings
+      if (config.SMTP_PORT === 465) {
+        // Port 465 uses implicit SSL
+        transportConfig.secure = true;
+      } else if (config.SMTP_PORT === 587) {
+        // Port 587 uses STARTTLS
+        transportConfig.secure = false;
+        transportConfig.requireTLS = true;
+        transportConfig.tls = {
           rejectUnauthorized: true,
           minVersion: 'TLSv1.2'
-        },
-        requireTLS: !config.SMTP_SECURE, // Use STARTTLS if not using SSL
+        };
+      } else {
+        // Use config values for other ports
+        transportConfig.tls = {
+          rejectUnauthorized: false, // More lenient for compatibility
+          minVersion: 'TLSv1.0'
+        };
+        if (!config.SMTP_SECURE) {
+          transportConfig.requireTLS = true;
+        }
+      }
+
+      this.logger.info('Final SMTP transport configuration', {
+        host: transportConfig.host,
+        port: transportConfig.port,
+        secure: transportConfig.secure,
+        requireTLS: transportConfig.requireTLS,
+        hasTLS: !!transportConfig.tls
       });
+
+      this.transporter = nodemailer.createTransport(transportConfig);
 
       // Only verify connection if explicitly enabled and not in test environment
       if (config.NODE_ENV !== 'test' && config.SMTP_VERIFY_CONNECTION === true) {
