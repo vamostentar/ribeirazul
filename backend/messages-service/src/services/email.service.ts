@@ -36,6 +36,15 @@ export class EmailService {
 
   private initializeTransporter(): void {
     try {
+      // Log the configuration being used (without password)
+      this.logger.info('Initializing SMTP transporter', {
+        host: config.SMTP_HOST,
+        port: config.SMTP_PORT,
+        secure: config.SMTP_SECURE,
+        user: config.SMTP_USER,
+        timeout: config.EMAIL_TIMEOUT
+      });
+
       this.transporter = nodemailer.createTransport({
         host: config.SMTP_HOST,
         port: config.SMTP_PORT,
@@ -52,27 +61,38 @@ export class EmailService {
         maxMessages: 100,
         rateLimit: 14, // messages per second
         rateDelta: 1000, // 1 second
+        // Add additional options for better SSL/TLS handling
+        tls: {
+          rejectUnauthorized: true,
+          minVersion: 'TLSv1.2'
+        },
+        requireTLS: !config.SMTP_SECURE, // Use STARTTLS if not using SSL
       });
 
-      // Verify connection
-      this.transporter.verify((error, success) => {
-        if (error) {
-          this.logger.error('SMTP connection verification failed', {
-            error: error.message,
-            host: config.SMTP_HOST,
-            port: config.SMTP_PORT,
-          });
-        } else {
-          this.logger.info('SMTP connection verified successfully', {
-            host: config.SMTP_HOST,
-            port: config.SMTP_PORT,
-            secure: config.SMTP_SECURE,
-          });
-        }
-      });
+      // Only verify connection if enabled and not in test environment
+      if (config.NODE_ENV !== 'test' && config.SMTP_VERIFY_CONNECTION) {
+        this.transporter.verify((error, success) => {
+          if (error) {
+            this.logger.error('SMTP connection verification failed', {
+              error: error.message,
+              host: config.SMTP_HOST,
+              port: config.SMTP_PORT,
+              secure: config.SMTP_SECURE,
+            });
+          } else {
+            this.logger.info('SMTP connection verified successfully', {
+              host: config.SMTP_HOST,
+              port: config.SMTP_PORT,
+              secure: config.SMTP_SECURE,
+            });
+          }
+        });
+      }
     } catch (error: any) {
       this.logger.error('Failed to initialize email transporter', {
         error: error.message,
+        host: config.SMTP_HOST,
+        port: config.SMTP_PORT,
       });
       throw error;
     }

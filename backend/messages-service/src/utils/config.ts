@@ -34,6 +34,7 @@ const schema = z.object({
   SMTP_PASS: z.string().min(1),
   EMAIL_FROM: z.string().email(),
   EMAIL_TIMEOUT: z.coerce.number().default(30000),
+  SMTP_VERIFY_CONNECTION: z.coerce.boolean().default(true),
   
   // IMAP Configuration
   IMAP_HOST: z.string().min(1),
