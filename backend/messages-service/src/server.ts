@@ -234,9 +234,13 @@ export async function buildServer(): Promise<FastifyInstance> {
 
 // Start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
+  logger.info('Starting server initialization...');
+  
   buildServer()
     .then(async (app) => {
+      logger.info('Server built successfully, starting to listen...');
       server = app;
+      
       const address = await app.listen({ 
         host: config.HOST, 
         port: config.PORT 
@@ -260,9 +264,11 @@ if (process.env.NODE_ENV !== 'test') {
       logger.fatal('Failed to start server', { 
         error: err.message, 
         stack: err.stack,
-        name: err.name 
+        name: err.name,
+        code: err.code
       });
       console.error('Full error object:', err);
+      console.error('Error stack:', err.stack);
       process.exit(1);
     });
 }

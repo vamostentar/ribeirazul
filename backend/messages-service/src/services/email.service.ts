@@ -461,6 +461,22 @@ export class EmailService {
     const lastCheck = new Date();
     
     try {
+      // If SMTP verification is disabled, consider service healthy
+      if (!config.SMTP_VERIFY_CONNECTION) {
+        return {
+          status: 'healthy',
+          lastCheck,
+          details: {
+            smtpConnected: 'verification-disabled',
+            circuitBreakerState: this.circuitBreaker.state,
+            host: config.SMTP_HOST,
+            port: config.SMTP_PORT,
+            secure: config.SMTP_SECURE,
+            verificationEnabled: config.SMTP_VERIFY_CONNECTION,
+          },
+        };
+      }
+
       const isConnected = await this.testConnection();
       const circuitBreakerState = this.circuitBreaker.state;
       
@@ -473,6 +489,7 @@ export class EmailService {
           host: config.SMTP_HOST,
           port: config.SMTP_PORT,
           secure: config.SMTP_SECURE,
+          verificationEnabled: config.SMTP_VERIFY_CONNECTION,
         },
       };
     } catch (error: any) {
@@ -483,6 +500,7 @@ export class EmailService {
           error: error.message,
           host: config.SMTP_HOST,
           port: config.SMTP_PORT,
+          verificationEnabled: config.SMTP_VERIFY_CONNECTION,
         },
       };
     }

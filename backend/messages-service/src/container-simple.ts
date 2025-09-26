@@ -1,13 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import { Redis } from 'ioredis';
-import { config, configService } from '@/utils/config';
-import { logger } from '@/utils/logger';
-import { MessageService } from '@/services/message.service';
-import { EmailService } from '@/services/email.service';
-import { MetricsService } from '@/services/metrics.service';
-import { HealthService } from '@/services/health.service';
 import { CacheService } from '@/services/cache.service';
 import { CircuitBreakerService } from '@/services/circuit-breaker.service';
+import { EmailService } from '@/services/email.service';
+import { HealthService } from '@/services/health.service';
+import { MessageService } from '@/services/message.service';
+import { MetricsService } from '@/services/metrics.service';
+import { config, configService } from '@/utils/config';
+import { logger } from '@/utils/logger';
+import { PrismaClient } from '@prisma/client';
+import { Redis } from 'ioredis';
 
 // Simple container without awilix
 export class SimpleContainer {
@@ -88,10 +88,17 @@ export class SimpleContainer {
 
   get emailService(): EmailService {
     if (!this._emailService) {
-      this._emailService = new EmailService(
-        this.metricsService,
-        this.circuitBreakerService
-      );
+      logger.info('Initializing EmailService...');
+      try {
+        this._emailService = new EmailService(
+          this.metricsService,
+          this.circuitBreakerService
+        );
+        logger.info('EmailService initialized successfully');
+      } catch (error: any) {
+        logger.error('Failed to initialize EmailService', { error: error.message });
+        throw error;
+      }
     }
     return this._emailService;
   }
