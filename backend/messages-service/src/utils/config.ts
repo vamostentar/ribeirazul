@@ -7,6 +7,25 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv();
 }
 
+// DEBUG: Log ALL environment variables to see what Coolify is injecting
+console.log('🔍 [DEBUG] All Environment Variables:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('SMTP_HOST:', JSON.stringify(process.env.SMTP_HOST));
+console.log('SMTP_USER:', JSON.stringify(process.env.SMTP_USER));
+console.log('SMTP_PASS:', JSON.stringify(process.env.SMTP_PASS));
+console.log('EMAIL_FROM:', JSON.stringify(process.env.EMAIL_FROM));
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+
+// Show all SMTP related variables
+const smtpVars = Object.keys(process.env)
+  .filter(key => key.includes('SMTP') || key.includes('EMAIL') || key.includes('IMAP'))
+  .reduce((obj, key) => {
+    obj[key] = process.env[key];
+    return obj;
+  }, {} as Record<string, string | undefined>);
+
+console.log('🔍 [DEBUG] All SMTP/EMAIL/IMAP variables:', JSON.stringify(smtpVars, null, 2));
+
 const schema = z.object({
   // Environment
   NODE_ENV: z.enum(['development','test','production']).default('development'),
@@ -26,21 +45,21 @@ const schema = z.object({
   REDIS_MAX_RETRIES: z.coerce.number().default(3),
   REDIS_RETRY_DELAY: z.coerce.number().default(1000),
   
-  // SMTP Configuration
-  SMTP_HOST: z.string().min(1),
+  // SMTP Configuration - TEMPORARILY OPTIONAL FOR DEBUG
+  SMTP_HOST: z.string().min(1).optional(),
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_SECURE: z.coerce.boolean().default(false),
-  SMTP_USER: z.string().min(1),
-  SMTP_PASS: z.string().min(1),
-  EMAIL_FROM: z.string().email(),
+  SMTP_USER: z.string().min(1).optional(),
+  SMTP_PASS: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().email().optional(),
   EMAIL_TIMEOUT: z.coerce.number().default(30000),
   
-  // IMAP Configuration
-  IMAP_HOST: z.string().min(1),
+  // IMAP Configuration - TEMPORARILY OPTIONAL FOR DEBUG
+  IMAP_HOST: z.string().min(1).optional(),
   IMAP_PORT: z.coerce.number().default(993),
   IMAP_SECURE: z.coerce.boolean().default(true),
-  IMAP_USER: z.string().min(1),
-  IMAP_PASS: z.string().min(1),
+  IMAP_USER: z.string().min(1).optional(),
+  IMAP_PASS: z.string().min(1).optional(),
   IMAP_POLL_INTERVAL: z.coerce.number().default(30000),
   
   // Queue Configuration

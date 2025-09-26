@@ -3,6 +3,12 @@ import { PrismaClient } from '@prisma/client';
 import { ImapFlow } from 'imapflow';
 
 export async function startImapWorker(prisma: PrismaClient) {
+  // Check if IMAP is configured
+  if (!config.IMAP_HOST || !config.IMAP_USER || !config.IMAP_PASS) {
+    console.log('⚠️ IMAP not configured, skipping IMAP worker');
+    return;
+  }
+
   const client = new ImapFlow({
     host: config.IMAP_HOST,
     port: config.IMAP_PORT,
