@@ -6,7 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { ProjectItem } from '@/components/ProjectItem';
 import { PropertiesArea } from '@/components/PropertiesArea';
 import { ListSkeleton } from '@/components/Skeleton';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const { data: settings } = useSettings();
@@ -144,6 +144,16 @@ function LeadForm() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [propertyDetails, setPropertyDetails] = useState<string>('');
+
+  // Check for property details in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const propertyParam = urlParams.get('property');
+    if (propertyParam) {
+      setPropertyDetails(decodeURIComponent(propertyParam));
+    }
+  }, []);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -252,6 +262,7 @@ function LeadForm() {
                     className="input" 
                     rows={5}
                     required
+                    defaultValue={propertyDetails}
                   />
                 </div>
 

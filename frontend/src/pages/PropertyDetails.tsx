@@ -200,10 +200,27 @@ export default function PropertyDetails() {
                 Entre em contacto connosco para mais informações sobre esta propriedade.
               </p>
               <div className="space-y-3">
-                <button className="w-full bg-sky-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-sky-700 transition-colors">
-                  Contactar Agente
-                </button>
-                <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={() => {
+                    // Create property details string
+                    const propertyDetails = `
+Propriedade: ${property.title}
+Localização: ${property.location}
+Preço: €${Number(property.price).toLocaleString('pt-PT')}
+Tipo: ${property.type || 'N/A'}
+Quartos: ${property.bedrooms || 'N/A'}
+Casas de banho: ${property.bathrooms || 'N/A'}
+Área: ${property.area ? `${property.area}m²` : 'N/A'}
+Estado: ${property.status === 'for_sale' ? 'À venda' : property.status === 'for_rent' ? 'Para arrendar' : 'Vendido'}
+
+Gostaria de agendar uma visita para esta propriedade.`.trim();
+
+                    // Navigate to contact form with property details
+                    const contactUrl = `/#contato?property=${encodeURIComponent(propertyDetails)}`;
+                    window.location.href = contactUrl;
+                  }}
+                  className="w-full bg-sky-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-sky-700 transition-colors"
+                >
                   Agendar Visita
                 </button>
               </div>
