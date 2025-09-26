@@ -28,13 +28,13 @@ const schema = z.object({
   
   // SMTP Configuration
   SMTP_HOST: z.string().min(1),
-  SMTP_PORT: z.coerce.number().default(587),
-  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_PORT: z.coerce.number().default(465),
+  SMTP_SECURE: z.coerce.boolean().default(true),
   SMTP_USER: z.string().min(1),
   SMTP_PASS: z.string().min(1),
   EMAIL_FROM: z.string().email(),
   EMAIL_TIMEOUT: z.coerce.number().default(30000),
-  SMTP_VERIFY_CONNECTION: z.coerce.boolean().default(true),
+  SMTP_VERIFY_CONNECTION: z.coerce.boolean().default(false),
   
   // IMAP Configuration
   IMAP_HOST: z.string().min(1),

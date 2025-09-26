@@ -42,7 +42,9 @@ export class EmailService {
         port: config.SMTP_PORT,
         secure: config.SMTP_SECURE,
         user: config.SMTP_USER,
-        timeout: config.EMAIL_TIMEOUT
+        timeout: config.EMAIL_TIMEOUT,
+        verifyConnection: config.SMTP_VERIFY_CONNECTION,
+        nodeEnv: config.NODE_ENV
       });
 
       this.transporter = nodemailer.createTransport({
@@ -69,8 +71,9 @@ export class EmailService {
         requireTLS: !config.SMTP_SECURE, // Use STARTTLS if not using SSL
       });
 
-      // Only verify connection if enabled and not in test environment
-      if (config.NODE_ENV !== 'test' && config.SMTP_VERIFY_CONNECTION) {
+      // Only verify connection if explicitly enabled and not in test environment
+      if (config.NODE_ENV !== 'test' && config.SMTP_VERIFY_CONNECTION === true) {
+        this.logger.info('SMTP connection verification is enabled, testing connection...');
         this.transporter.verify((error, success) => {
           if (error) {
             this.logger.error('SMTP connection verification failed', {
@@ -86,6 +89,11 @@ export class EmailService {
               secure: config.SMTP_SECURE,
             });
           }
+        });
+      } else {
+        this.logger.info('SMTP connection verification is disabled', {
+          nodeEnv: config.NODE_ENV,
+          verifyConnection: config.SMTP_VERIFY_CONNECTION
         });
       }
     } catch (error: any) {
@@ -424,6 +432,12 @@ export class EmailService {
    * Test email configuration
    */
   async testConnection(): Promise<boolean> {
+    // Skip connection test if verification is disabled
+    if (!config.SMTP_VERIFY_CONNECTION) {
+      this.logger.debug('SMTP connection test skipped (verification disabled)');
+      return true;
+    }
+
     try {
       await this.transporter.verify();
       this.logger.info('Email connection test successful');
