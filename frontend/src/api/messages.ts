@@ -65,3 +65,4 @@ export async function getMessageById(id: string): Promise<MessageResponse> {
     throw new Error('Falha ao buscar mensagem');
   }
 }
+
