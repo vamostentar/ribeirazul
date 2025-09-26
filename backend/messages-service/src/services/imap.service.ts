@@ -109,11 +109,6 @@ export class ImapService {
     const startTime = Date.now();
 
     try {
-      // Check if IMAP is configured
-      if (!config.IMAP_HOST || !config.IMAP_USER || !config.IMAP_PASS) {
-        throw new Error('IMAP not fully configured');
-      }
-
       this.client = new ImapFlow({
         host: config.IMAP_HOST,
         port: config.IMAP_PORT,

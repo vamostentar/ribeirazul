@@ -7,25 +7,6 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv();
 }
 
-// DEBUG: Log ALL environment variables to see what Coolify is injecting
-console.log('🔍 [DEBUG] All Environment Variables:');
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('SMTP_HOST:', JSON.stringify(process.env.SMTP_HOST));
-console.log('SMTP_USER:', JSON.stringify(process.env.SMTP_USER));
-console.log('SMTP_PASS:', JSON.stringify(process.env.SMTP_PASS));
-console.log('EMAIL_FROM:', JSON.stringify(process.env.EMAIL_FROM));
-console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
-
-// Show all SMTP related variables
-const smtpVars = Object.keys(process.env)
-  .filter(key => key.includes('SMTP') || key.includes('EMAIL') || key.includes('IMAP'))
-  .reduce((obj, key) => {
-    obj[key] = process.env[key];
-    return obj;
-  }, {} as Record<string, string | undefined>);
-
-console.log('🔍 [DEBUG] All SMTP/EMAIL/IMAP variables:', JSON.stringify(smtpVars, null, 2));
-
 const schema = z.object({
   // Environment
   NODE_ENV: z.enum(['development','test','production']).default('development'),
@@ -45,33 +26,21 @@ const schema = z.object({
   REDIS_MAX_RETRIES: z.coerce.number().default(3),
   REDIS_RETRY_DELAY: z.coerce.number().default(1000),
   
-  // SMTP Configuration - WITH SMART FALLBACKS
-  SMTP_HOST: z.string().optional().transform(val => {
-    if (val && val.trim().length > 0) return val.trim();
-    return 'send.one.com'; // Use send.one.com for SMTP
-  }),
-  SMTP_PORT: z.coerce.number().default(465), // Use 465 for send.one.com
-  SMTP_SECURE: z.coerce.boolean().default(true), // Use SSL for send.one.com
-  SMTP_USER: z.string().optional().transform(val => {
-    if (val && val.trim().length > 0) return val.trim();
-    return process.env.IMAP_USER || process.env.EMAIL_FROM || 'info@immorz.pt';
-  }),
-  SMTP_PASS: z.string().optional().transform(val => {
-    if (val && val.trim().length > 0) return val.trim();
-    return process.env.IMAP_PASS || '';
-  }),
-  EMAIL_FROM: z.string().optional().transform(val => {
-    if (val && val.trim().length > 0) return val.trim();
-    return 'info@immorz.pt';
-  }),
+  // SMTP Configuration
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_USER: z.string().min(1),
+  SMTP_PASS: z.string().min(1),
+  EMAIL_FROM: z.string().email(),
   EMAIL_TIMEOUT: z.coerce.number().default(30000),
   
-  // IMAP Configuration - TEMPORARILY OPTIONAL FOR DEBUG
-  IMAP_HOST: z.string().min(1).optional(),
+  // IMAP Configuration
+  IMAP_HOST: z.string().min(1),
   IMAP_PORT: z.coerce.number().default(993),
   IMAP_SECURE: z.coerce.boolean().default(true),
-  IMAP_USER: z.string().min(1).optional(),
-  IMAP_PASS: z.string().min(1).optional(),
+  IMAP_USER: z.string().min(1),
+  IMAP_PASS: z.string().min(1),
   IMAP_POLL_INTERVAL: z.coerce.number().default(30000),
   
   // Queue Configuration
@@ -168,13 +137,17 @@ class ConfigService {
 
   // Helper methods for complex configurations
   get corsOrigins(): string[] {
-    if (!this._config.CORS_ORIGINS) return ['*'];
-    return this._config.CORS_ORIGINS.split(',').map(origin => origin.trim());
+    if (!this._config.CORS_ORIGINS || this._config.CORS_ORIGINS.trim().length === 0) {
+      return ['*'];
+    }
+    return this._config.CORS_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean);
   }
 
   get allowedApiKeys(): Set<string> {
-    if (!this._config.ALLOWED_API_KEYS) return new Set();
-    return new Set(this._config.ALLOWED_API_KEYS.split(',').map(key => key.trim()));
+    if (!this._config.ALLOWED_API_KEYS || this._config.ALLOWED_API_KEYS.trim().length === 0) {
+      return new Set();
+    }
+    return new Set(this._config.ALLOWED_API_KEYS.split(',').map(key => key.trim()).filter(Boolean));
   }
 
   get redisConfig() {

@@ -36,16 +36,6 @@ export class EmailService {
 
   private initializeTransporter(): void {
     try {
-      // Check if SMTP is configured
-      if (!config.SMTP_HOST || !config.SMTP_USER || !config.SMTP_PASS) {
-        this.logger.warn('SMTP not fully configured, email service will be disabled', {
-          hasHost: !!config.SMTP_HOST,
-          hasUser: !!config.SMTP_USER,
-          hasPass: !!config.SMTP_PASS,
-        });
-        return;
-      }
-
       this.transporter = nodemailer.createTransport({
         host: config.SMTP_HOST,
         port: config.SMTP_PORT,
@@ -124,19 +114,6 @@ export class EmailService {
     });
 
     try {
-      // Check if email service is configured
-      if (!this.transporter) {
-        emailLogger.warn('Email service not configured, skipping email send');
-        
-        return {
-          messageId: `mock-${Date.now()}`,
-          accepted: [data.fromEmail],
-          rejected: [],
-          pending: [],
-          response: 'Email service not configured - message logged only',
-        };
-      }
-
       emailLogger.info('Sending contact email', {
         fromEmail: data.fromEmail,
         fromName: data.fromName,
