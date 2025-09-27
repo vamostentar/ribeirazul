@@ -216,7 +216,7 @@ Estado: ${property.status === 'for_sale' ? 'À venda' : property.status === 'for
 Gostaria de agendar uma visita para esta propriedade.`.trim();
 
                     // Navigate to contact form with property details
-                    const contactUrl = `/#contato?property=${encodeURIComponent(propertyDetails)}`;
+                    const contactUrl = `/?property=${encodeURIComponent(propertyDetails)}#contato`;
                     window.location.href = contactUrl;
                   }}
                   className="w-full bg-sky-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-sky-700 transition-colors"
